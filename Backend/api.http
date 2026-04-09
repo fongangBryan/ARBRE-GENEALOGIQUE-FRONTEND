@@ -1,0 +1,394 @@
+### Variables
+@baseUrl = http://localhost:8000/api/v1
+@accessToken = REMPLACER_PAR_LE_TOKEN
+@refreshToken = REMPLACER_PAR_LE_REFRESH_TOKEN
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HEALTH
+# ─────────────────────────────────────────────────────────────────────────────
+
+### Health check
+GET http://localhost:8000/health
+
+### Root
+GET http://localhost:8000/
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# AUTH
+# ─────────────────────────────────────────────────────────────────────────────
+
+### Inscription
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "Test1234!",
+  "first_name": "Jean",
+  "last_name": "Dupont"
+}
+
+###
+
+### Connexion  →  copiez access_token dans @accessToken ci-dessus
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "Test1234!"
+}
+
+###
+
+### Connexion Admin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@genealogie.com",
+  "password": "Admin123!"
+}
+
+###
+
+### Rafraîchir le token
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+###
+
+### Déconnexion
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{accessToken}}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# USERS
+# ─────────────────────────────────────────────────────────────────────────────
+
+### Mon profil
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Modifier mon profil
+PUT {{baseUrl}}/users/me
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "first_name": "Jean",
+  "last_name": "Dupont"
+}
+
+###
+
+### Changer mon mot de passe
+PUT {{baseUrl}}/users/me/password
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "current_password": "Test1234!",
+  "new_password": "NewPass456!"
+}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PERSONS
+# ─────────────────────────────────────────────────────────────────────────────
+
+### Lister les personnes
+GET {{baseUrl}}/persons
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Créer une personne
+POST {{baseUrl}}/persons
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "first_name": "Marie",
+  "last_name": "Curie",
+  "birth_date": "1867-11-07",
+  "gender": "F"
+}
+
+###
+
+### Récupérer une personne
+GET {{baseUrl}}/persons/1
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Modifier une personne
+PUT {{baseUrl}}/persons/1
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "first_name": "Marie",
+  "last_name": "Curie",
+  "birth_date": "1867-11-07",
+  "death_date": "1934-07-04"
+}
+
+###
+
+### Supprimer une personne
+DELETE {{baseUrl}}/persons/1
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Rechercher des personnes
+GET {{baseUrl}}/persons?search=Marie
+Authorization: Bearer {{accessToken}}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# RELATIONSHIPS
+# ─────────────────────────────────────────────────────────────────────────────
+
+### Lister les relations
+GET {{baseUrl}}/relationships
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Créer une relation parent-enfant
+POST {{baseUrl}}/relationships
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "person1_id": 1,
+  "person2_id": 2,
+  "relationship_type": "PARENT_CHILD"
+}
+
+###
+
+### Créer une relation conjoint
+POST {{baseUrl}}/relationships
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "person1_id": 1,
+  "person2_id": 2,
+  "relationship_type": "SPOUSE"
+}
+
+###
+
+### Récupérer une relation
+GET {{baseUrl}}/relationships/1
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Supprimer une relation
+DELETE {{baseUrl}}/relationships/1
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Relations d'une personne
+GET {{baseUrl}}/relationships?person_id=1
+Authorization: Bearer {{accessToken}}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TREE
+# ─────────────────────────────────────────────────────────────────────────────
+
+### Arbre généalogique d'une personne
+GET {{baseUrl}}/tree/1
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Arbre avec profondeur personnalisée
+GET {{baseUrl}}/tree/1?depth=3
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Ancêtres d'une personne
+GET {{baseUrl}}/tree/1/ancestors
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Descendants d'une personne
+GET {{baseUrl}}/tree/1/descendants
+Authorization: Bearer {{accessToken}}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# EVENTS
+# ─────────────────────────────────────────────────────────────────────────────
+
+### Lister les événements
+GET {{baseUrl}}/events
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Créer un événement de naissance
+POST {{baseUrl}}/events
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "person_id": 1,
+  "event_type": "BIRTH",
+  "date": "1867-11-07",
+  "place": "Varsovie, Pologne",
+  "description": "Naissance de Marie Curie"
+}
+
+###
+
+### Créer un événement de mariage
+POST {{baseUrl}}/events
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "person_id": 1,
+  "event_type": "MARRIAGE",
+  "date": "1895-07-26",
+  "place": "Paris, France"
+}
+
+###
+
+### Créer un événement de décès
+POST {{baseUrl}}/events
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "person_id": 1,
+  "event_type": "DEATH",
+  "date": "1934-07-04",
+  "place": "Passy, France"
+}
+
+###
+
+### Récupérer un événement
+GET {{baseUrl}}/events/1
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Modifier un événement
+PUT {{baseUrl}}/events/1
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "place": "Varsovie, Royaume du Congrès"
+}
+
+###
+
+### Supprimer un événement
+DELETE {{baseUrl}}/events/1
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Événements d'une personne
+GET {{baseUrl}}/events?person_id=1
+Authorization: Bearer {{accessToken}}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MEDIA
+# ─────────────────────────────────────────────────────────────────────────────
+
+### Lister les médias
+GET {{baseUrl}}/media
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Uploader un média (remplacer le chemin)
+POST {{baseUrl}}/media
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="photo.jpg"
+Content-Type: image/jpeg
+
+< ./photo.jpg
+--boundary
+Content-Disposition: form-data; name="person_id"
+
+1
+--boundary--
+
+###
+
+### Récupérer un média
+GET {{baseUrl}}/media/1
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Supprimer un média
+DELETE {{baseUrl}}/media/1
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Médias d'une personne
+GET {{baseUrl}}/media?person_id=1
+Authorization: Bearer {{accessToken}}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ADMIN
+# ─────────────────────────────────────────────────────────────────────────────
+
+### Lister tous les utilisateurs
+GET {{baseUrl}}/admin/users
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Récupérer un utilisateur
+GET {{baseUrl}}/admin/users/1
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Activer / désactiver un utilisateur
+PUT {{baseUrl}}/admin/users/1
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "is_active": false
+}
+
+###
+
+### Supprimer un utilisateur
+DELETE {{baseUrl}}/admin/users/1
+Authorization: Bearer {{accessToken}}
