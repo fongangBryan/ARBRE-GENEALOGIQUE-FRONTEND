@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.env
+.env.prod
+alembic/versions/*.py
+!alembic/versions/.gitkeep
+.DS_Store
+*.db
+*.sqlite
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/

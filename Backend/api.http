@@ -1,5 +1,6 @@
 ### Variables
 @baseUrl = http://localhost:8000/api/v1
+# Swagger UI : http://localhost:8000/api/docs
 @accessToken = REMPLACER_PAR_LE_TOKEN
 @refreshToken = REMPLACER_PAR_LE_REFRESH_TOKEN
 

@@ -89,3 +89,33 @@ class MediaService:
             return None
     
     # ... Le reste de la classe reste identique ...
+
+    def get_media(self, media_id: UUID) -> Optional[Media]:
+        return self.repo.get_by_id(media_id)
+    
+    def get_media_by_owner(self, owner_type: str, owner_id: UUID) -> List[Media]:
+        return self.repo.get_by_owner(owner_type, owner_id)
+    
+    def get_media_file_path(self, storage_key: str) -> str:
+        return os.path.join(self.upload_dir, storage_key)
+    
+    def delete_media(self, media_id: UUID) -> bool:
+        media = self.repo.get_by_id(media_id)
+        if not media:
+            return False
+        
+        # Supprimer le fichier
+        file_path = self.get_media_file_path(media.storage_key)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        
+        # Supprimer la miniature
+        if media.thumbnail_key:
+            thumb_path = self.get_media_file_path(media.thumbnail_key)
+            if os.path.exists(thumb_path):
+                os.remove(thumb_path)
+        
+        return self.repo.delete(media_id)
+    
+    def update_privacy(self, media_id: UUID, privacy_level: str) -> Optional[Media]:
+        return self.repo.update_privacy(media_id, privacy_level)

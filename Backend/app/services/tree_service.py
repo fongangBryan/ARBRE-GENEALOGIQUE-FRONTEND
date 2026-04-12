@@ -5,8 +5,8 @@ from collections import deque
 
 from app.services.relationship_service import RelationshipService
 from app.services.person_service import PersonService
-from app.services.acl_service import ACLService
 from app.schemas.tree import CytoscapeGraph, CytoscapeNode, CytoscapeEdge
+from app.utils.helpers import format_name, truncate_text  # NOUVEAU
 
 class TreeService:
     def __init__(self, db: Session):
@@ -37,14 +37,17 @@ class TreeService:
             
             processed.add(person_id)
             
-            # Ajouter le nœud
+            # Ajouter le nœud - Utiliser helpers
             person = self.person_service.get_person(person_id)
             if person:
+                full_name = format_name(person.first_name, person.last_name, person.maiden_name)  # MODIFIÉ
                 nodes[person_id] = {
                     "id": str(person_id),
-                    "label": f"{person.first_name} {person.last_name}",
+                    "label": truncate_text(full_name, 30),  # MODIFIÉ
                     "birth_date": person.birth_date,
-                    "is_living": person.is_living
+                    "is_living": person.is_living,
+                    "first_name": person.first_name,
+                    "last_name": person.last_name
                 }
             
             # Ajouter l'arête parent-enfant
@@ -83,6 +86,8 @@ class TreeService:
             edges=[CytoscapeEdge(data=edge) for edge in edges]
         )
     
+    # ... Le reste de la classe reste identique ...
+
     def build_neighbors_graph(self, person_id: UUID, radius: int, user_id: UUID) -> CytoscapeGraph:
         """Construit un graphe des voisins"""
         nodes: Dict[UUID, dict] = {}

@@ -6,6 +6,7 @@ from app.models.relationship import Relationship, RelationshipType
 from app.schemas.relationship import RelationshipCreate, RelationshipUpdate
 from app.repositories.relationship_repository import RelationshipRepository
 from app.repositories.person_repository import PersonRepository
+from app.core.exceptions import NotFoundException, ConflictException, CycleDetectedException  # NOUVEAU
 
 class RelationshipService:
     def __init__(self, db: Session):
@@ -19,7 +20,7 @@ class RelationshipService:
         person2 = self.person_repo.get_by_id(relationship_data.person_id_2)
         
         if not person1 or not person2:
-            raise ValueError("One or both persons not found")
+            raise NotFoundException("Person", relationship_data.person_id_1 if not person1 else relationship_data.person_id_2)
         
         # Vérifier si la relation existe déjà
         existing = self.repo.get_between(
@@ -27,12 +28,12 @@ class RelationshipService:
             relationship_data.person_id_2
         )
         if existing:
-            raise ValueError("Relationship already exists between these persons")
+            raise ConflictException("Relationship already exists between these persons")
         
         # Pour PARENT_CHILD, vérifier les cycles
         if relationship_data.type == RelationshipType.PARENT_CHILD:
             if self._would_create_cycle(relationship_data.person_id_1, relationship_data.person_id_2):
-                raise ValueError("This relationship would create a cycle in the tree")
+                raise CycleDetectedException("This relationship would create a cycle in the tree")
         
         relationship = Relationship(
             type=relationship_data.type,
@@ -49,7 +50,6 @@ class RelationshipService:
     
     def _would_create_cycle(self, parent_id: UUID, child_id: UUID) -> bool:
         """Vérifie si ajouter parent->enfant créerait un cycle"""
-        # Vérifier si child est un ancêtre de parent
         ancestors = self._get_all_ancestors(parent_id)
         return child_id in ancestors
     
@@ -81,7 +81,7 @@ class RelationshipService:
     def update_relationship(self, relationship_id: UUID, relationship_data: RelationshipUpdate) -> Optional[Relationship]:
         relationship = self.repo.get_by_id(relationship_id)
         if not relationship:
-            return None
+            raise NotFoundException("Relationship", relationship_id)
         
         update_data = relationship_data.model_dump(exclude_unset=True)
         for key, value in update_data.items():
