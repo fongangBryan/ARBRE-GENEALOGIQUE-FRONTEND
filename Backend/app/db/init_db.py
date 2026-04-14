@@ -59,8 +59,8 @@ def _create_admin_user(db: Session) -> None:
     db.add(admin)
     db.commit()
     
-    logger.info(f"✅ Admin user created: {admin_email} / {admin_password}")
-    logger.info("⚠️  Please change the default password on first login!")
+    logger.info(f"Admin user created: {admin_email} / {admin_password}")
+    logger.info(" Please change the default password on first login!")
 
 
 def _create_demo_data(db: Session) -> None:
@@ -83,10 +83,10 @@ def _create_demo_data(db: Session) -> None:
 
 def reset_db() -> None:
     """
-    Réinitialise complètement la base de données (⚠️ DESTRUCTIF)
+    Réinitialise complètement la base de données ( DESTRUCTIF)
     Utile pour les tests ou le développement
     """
-    logger.warning("⚠️  Resetting database - ALL DATA WILL BE LOST!")
+    logger.warning(" Resetting database - ALL DATA WILL BE LOST!")
     
     from app.db.base import Base
     Base.metadata.drop_all(bind=engine)
