@@ -1,0 +1,385 @@
+<div class="layout" [class.mob-open]="sidebarOpen()">
+
+  <!-- Mobile overlay -->
+  <div class="overlay" (click)="sidebarOpen.set(false)"></div>
+
+  <!-- ══════════════════ SIDEBAR ══════════════════ -->
+  <aside class="sidebar">
+
+    <div class="sidebar-logo">
+      <div class="s-logo-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L12 7"/><path d="M12 7C12 7 8 9 6 13H18C16 9 12 7 12 7Z"/>
+          <path d="M12 13V22"/><path d="M8 18H16"/>
+        </svg>
+      </div>
+      <span class="s-logo-name">GénéaTree</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <p class="nav-section">Principal</p>
+
+      <a routerLink="/dashboard" [routerLinkActiveOptions]="{exact:true}" routerLinkActive="active" class="nav-item">
+        <svg class="ni" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        Tableau de bord
+      </a>
+
+      <a routerLink="/tree" routerLinkActive="active" class="nav-item">
+        <svg class="ni" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L12 7"/><path d="M12 7C12 7 8 9 6 13H18C16 9 12 7 12 7Z"/>
+          <path d="M12 13V22"/><path d="M8 18H16"/>
+        </svg>
+        Arbre généalogique
+      </a>
+
+      <a routerLink="/members" routerLinkActive="active" class="nav-item">
+        <svg class="ni" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        Membres
+      </a>
+
+      <a routerLink="/media" routerLinkActive="active" class="nav-item">
+        <svg class="ni" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+        Photos & Médias
+      </a>
+
+      <a routerLink="/documents" routerLinkActive="active" class="nav-item">
+        <svg class="ni" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+        Documents
+      </a>
+
+      <p class="nav-section">Compte</p>
+
+      <a routerLink="/settings" routerLinkActive="active" class="nav-item">
+        <svg class="ni" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Paramètres
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sf-avatar">{{ getUserInitials() }}</div>
+      <div class="sf-info">
+        <p class="sf-email">{{ getUserEmail() }}</p>
+        <p class="sf-role">Membre</p>
+      </div>
+      <button class="logout-btn" (click)="logout()" title="Se déconnecter">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ══════════════════ MAIN ══════════════════ -->
+  <main class="main">
+
+    <header class="topbar">
+      <button class="menu-toggle" (click)="toggleSidebar()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+
+      <div class="topbar-brand">
+        <h1 class="topbar-title">Tableau de bord</h1>
+        <p class="topbar-sub">Votre espace généalogique</p>
+      </div>
+
+      <span class="tb-spacer"></span>
+
+      <div class="topbar-right">
+        <button class="tb-icon-btn" title="Notifications">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span class="notif-dot"></span>
+        </button>
+        <div class="tb-avatar" title="{{ getUserEmail() }}">{{ getUserInitials() }}</div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- Welcome row -->
+      <div class="welcome-row">
+        <div>
+          <h2 class="welcome-title">Bonjour ! 👋</h2>
+          <p class="welcome-sub">
+            @if (loading()) {
+              Chargement de votre arbre…
+            } @else {
+              Votre arbre compte <strong>{{ totalPersons() }}</strong> membre{{ totalPersons() !== 1 ? 's' : '' }}
+            }
+          </p>
+        </div>
+        <a routerLink="/members/add" class="btn-new-member">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Nouveau membre
+        </a>
+      </div>
+
+      <!-- Stats grid -->
+      <div class="stats-grid">
+
+        <div class="stat-card card-green">
+          <div class="stat-icon-wrap">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            @if (loading()) {
+              <div class="stat-skeleton"></div>
+            } @else {
+              <p class="stat-value">{{ totalPersons() }}</p>
+            }
+            <p class="stat-label">Membres</p>
+          </div>
+        </div>
+
+        <div class="stat-card card-blue">
+          <div class="stat-icon-wrap">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L12 7"/><path d="M12 7C12 7 8 9 6 13H18C16 9 12 7 12 7Z"/>
+              <path d="M12 13V22"/><path d="M8 18H16"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <p class="stat-value">—</p>
+            <p class="stat-label">Générations</p>
+          </div>
+        </div>
+
+        <div class="stat-card card-bright">
+          <div class="stat-icon-wrap">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <p class="stat-value">0</p>
+            <p class="stat-label">Photos</p>
+          </div>
+        </div>
+
+        <div class="stat-card card-teal">
+          <div class="stat-icon-wrap">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <p class="stat-value">0</p>
+            <p class="stat-label">Documents</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Main grid -->
+      <div class="main-grid">
+
+        <!-- Membres récents -->
+        <div class="panel">
+          <div class="panel-head">
+            <h2 class="panel-title">Membres récents</h2>
+            <a routerLink="/members" class="panel-link">Voir tout →</a>
+          </div>
+
+          @if (loading()) {
+            <div class="skeleton-list">
+              @for (i of [1,2,3,4]; track i) {
+                <div class="skeleton-item">
+                  <div class="sk sk-avatar"></div>
+                  <div class="sk-lines">
+                    <div class="sk sk-line-lg"></div>
+                    <div class="sk sk-line-sm"></div>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else if (persons().length === 0) {
+            <div class="empty-state">
+              <div class="empty-icon">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#02E08E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              </div>
+              <p class="empty-title">Aucun membre pour l'instant</p>
+              <p class="empty-sub">Commencez par ajouter le premier membre de votre famille</p>
+              <a routerLink="/members/add" class="btn-empty">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Ajouter un membre
+              </a>
+            </div>
+          } @else {
+            <div class="person-list">
+              @for (p of persons(); track p.id) {
+                <div class="person-item">
+                  <div class="person-avatar">{{ getInitials(p.first_name, p.last_name) }}</div>
+                  <div class="person-info">
+                    <p class="person-name">{{ p.first_name }} {{ p.last_name }}</p>
+                    <p class="person-meta">
+                      @if (p.birth_date) {
+                        Né(e) le {{ p.birth_date | date:'d MMM yyyy' : '' : 'fr' }}
+                      } @else {
+                        Date de naissance inconnue
+                      }
+                    </p>
+                  </div>
+                  <a [routerLink]="['/members', p.id]" class="person-arrow">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                  </a>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Colonne droite -->
+        <div class="right-col">
+
+          <!-- Actions rapides -->
+          <div class="panel">
+            <div class="panel-head">
+              <h2 class="panel-title">Actions rapides</h2>
+            </div>
+            <div class="actions-list">
+
+              <a routerLink="/members/add" class="action-item act-green">
+                <div class="action-icon ai-green">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <line x1="19" y1="8" x2="19" y2="14"/>
+                    <line x1="22" y1="11" x2="16" y2="11"/>
+                  </svg>
+                </div>
+                <div class="action-text">
+                  <p class="action-title">Ajouter un membre</p>
+                  <p class="action-desc">Enrichir votre arbre</p>
+                </div>
+                <svg class="action-chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </a>
+
+              <a routerLink="/tree" class="action-item act-blue">
+                <div class="action-icon ai-blue">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                    <path d="M12 2L12 7"/><path d="M12 7C12 7 8 9 6 13H18C16 9 12 7 12 7Z"/>
+                    <path d="M12 13V22"/><path d="M8 18H16"/>
+                  </svg>
+                </div>
+                <div class="action-text">
+                  <p class="action-title">Voir l'arbre</p>
+                  <p class="action-desc">Visualisation graphique</p>
+                </div>
+                <svg class="action-chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </a>
+
+              <a routerLink="/media" class="action-item act-cyan">
+                <div class="action-icon ai-cyan">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                </div>
+                <div class="action-text">
+                  <p class="action-title">Ajouter des photos</p>
+                  <p class="action-desc">Albums et médias</p>
+                </div>
+                <svg class="action-chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </a>
+
+              <a routerLink="/documents" class="action-item act-bright">
+                <div class="action-icon ai-bright">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                  </svg>
+                </div>
+                <div class="action-text">
+                  <p class="action-title">Importer un document</p>
+                  <p class="action-desc">Actes, archives…</p>
+                </div>
+                <svg class="action-chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </a>
+
+            </div>
+          </div>
+
+          <!-- Bannière arbre -->
+          <div class="tree-banner">
+            <div class="tb-content">
+              <p class="tb-tag">Bientôt disponible</p>
+              <h3 class="tb-title">Visualisez votre arbre</h3>
+              <p class="tb-desc">Explorez toutes les connexions familiales en un coup d'œil</p>
+              <a routerLink="/tree" class="tb-btn">
+                Explorer l'arbre
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                </svg>
+              </a>
+            </div>
+            <div class="tb-illustration">
+              <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L12 7"/><path d="M12 7C12 7 8 9 6 13H18C16 9 12 7 12 7Z"/>
+                <path d="M12 13V22"/><path d="M8 18H16"/>
+              </svg>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

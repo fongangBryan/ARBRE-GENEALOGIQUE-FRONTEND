@@ -1,0 +1,111 @@
+/* ── Page background ────────────────────────────────────────── */
+.page {
+  min-height: 100vh;
+  background: linear-gradient(145deg, #e6fbf4 0%, #ccf4e3 40%, #d9f9ee 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Blobs décoratifs */
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  opacity: .55;
+  pointer-events: none;
+}
+.blob-tl { width: 480px; height: 480px; background: radial-gradient(circle, #a7f3d0, #6ee7b7); top: -180px; left: -160px; }
+.blob-tr { width: 300px; height: 300px; background: radial-gradient(circle, #d1fae5, #a7f3d0); top:  60px; right: -80px;  opacity: .4; }
+.blob-bl { width: 260px; height: 260px; background: radial-gradient(circle, #bbf7d0, #86efac); bottom: 40px; left: -60px; opacity: .45; }
+.blob-br { width: 380px; height: 380px; background: radial-gradient(circle, #a7f3d0, #6ee7b7); bottom: -120px; right: -100px; }
+.blob-c  { width: 200px; height: 200px; background: radial-gradient(circle, #ecfdf5, #d1fae5); top: 45%; left: 15%; opacity: .35; }
+
+/* ── Card ───────────────────────────────────────────────────── */
+.card {
+  position: relative;
+  z-index: 10;
+  background: #fff;
+  border-radius: 20px;
+  padding: 40px 44px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 8px 40px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.06);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Logo ───────────────────────────────────────────────────── */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+}
+.logo-icon {
+  width: 42px; height: 42px; border-radius: 12px;
+  background: var(--primary);
+  display: flex; align-items: center; justify-content: center;
+}
+.logo-name {
+  font-size: 22px; font-weight: 700;
+  color: var(--primary-dark); letter-spacing: -.4px;
+}
+
+/* ── Subtitle ───────────────────────────────────────────────── */
+.subtitle {
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ── Form ───────────────────────────────────────────────────── */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Forgot link ────────────────────────────────────────────── */
+.forgot-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -6px;
+}
+.forgot-row a {
+  font-size: 13px;
+  color: var(--primary-dark);
+  font-weight: 500;
+}
+.forgot-row a:hover { text-decoration: underline; }
+
+/* ── Spinner ────────────────────────────────────────────────── */
+.spinner {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2.5px solid rgba(255,255,255,.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Register link ──────────────────────────────────────────── */
+.register-link {
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+}
+.register-link a {
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .card { padding: 32px 24px; }
+}
