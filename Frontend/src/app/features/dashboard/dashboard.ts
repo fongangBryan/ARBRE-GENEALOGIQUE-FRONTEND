@@ -2,9 +2,9 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
-import { AuthService } from '../core/services/auth.service';
+import { AuthService } from '../../services/auth.service';
 
-const API = 'http://localhost:8000/api/v1';
+const API = 'http://localhost:8080/api/v1';
 
 interface Person {
   id: number;
@@ -12,6 +12,11 @@ interface Person {
   last_name: string;
   birth_date?: string | null;
   gender?: string;
+}
+
+interface PersonListResponse {
+  items: Person[];
+  total: number;
 }
 
 @Component({
@@ -30,13 +35,18 @@ export class DashboardComponent implements OnInit {
   totalPersons = signal(0);
   sidebarOpen  = signal(false);
 
-  ngOnInit() { this.loadData(); }
+  ngOnInit() {
+    if (!this.auth.currentUser()) {
+      this.auth.fetchCurrentUser().subscribe();
+    }
+    this.loadData();
+  }
 
   private loadData() {
-    this.http.get<Person[]>(`${API}/persons/`).subscribe({
+    this.http.get<PersonListResponse>(`${API}/persons/`).subscribe({
       next: data => {
-        this.totalPersons.set(data.length);
-        this.persons.set(data.slice(0, 6));
+        this.totalPersons.set(data.total);
+        this.persons.set(data.items.slice(0, 6));
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
@@ -51,19 +61,19 @@ export class DashboardComponent implements OnInit {
   }
 
   getUserInitials(): string {
-    const payload = this.decodeToken();
-    if (!payload) return 'U';
-    const email: string = payload.sub ?? '';
-    return email.slice(0, 2).toUpperCase();
+    const user = this.auth.currentUser();
+    if (user?.first_name || user?.last_name) {
+      return `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase();
+    }
+    return user?.email?.slice(0, 2).toUpperCase() ?? 'U';
   }
 
   getUserEmail(): string {
-    return this.decodeToken()?.sub ?? 'utilisateur';
+    return this.auth.currentUser()?.email ?? '';
   }
 
-  private decodeToken(): any {
-    const token = this.auth.getToken();
-    if (!token) return null;
-    try { return JSON.parse(atob(token.split('.')[1])); } catch { return null; }
+  getUserRole(): string {
+    const role = this.auth.currentUser()?.role ?? 'editor';
+    return role.charAt(0).toUpperCase() + role.slice(1);
   }
 }

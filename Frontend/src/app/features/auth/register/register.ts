@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../core/services/auth.service';
+import { RouterLink } from '@angular/router';
+import { AuthService } from '../../../services/auth.service';
 
 function passwordsMatch(g: AbstractControl): ValidationErrors | null {
   const pw  = g.get('password')?.value;
@@ -17,9 +17,8 @@ function passwordsMatch(g: AbstractControl): ValidationErrors | null {
   styleUrl: './register.css',
 })
 export class RegisterComponent {
-  private fb     = inject(FormBuilder);
-  private router = inject(Router);
-  private auth   = inject(AuthService);
+  private fb   = inject(FormBuilder);
+  private auth = inject(AuthService);
 
   form = this.fb.group({
     first_name:      ['', [Validators.required, Validators.minLength(2)]],
@@ -49,9 +48,9 @@ export class RegisterComponent {
     const pw = this.password.value ?? '';
     if (pw.length === 0) return 0;
     let s = 0;
-    if (pw.length >= 8)           s++;
-    if (/[A-Z]/.test(pw))         s++;
-    if (/\d/.test(pw))            s++;
+    if (pw.length >= 8)   s++;
+    if (/[A-Z]/.test(pw)) s++;
+    if (/\d/.test(pw))    s++;
     return s as 0 | 1 | 2 | 3;
   }
 
@@ -66,7 +65,12 @@ export class RegisterComponent {
 
     const { first_name, last_name, email, password } = this.form.getRawValue();
     this.auth.register({ first_name: first_name!, last_name: last_name!, email: email!, password: password! }).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
+      next: () => {
+        this.auth.fetchCurrentUser().subscribe({
+          next: () => this.auth.navigateByRole(),
+          error: () => this.auth.navigateByRole(),
+        });
+      },
       error: err => {
         this.loading.set(false);
         this.error.set(err.error?.detail ?? 'Une erreur est survenue. Veuillez réessayer.');

@@ -5,6 +5,7 @@ networks:
 volumes:
   postgres_data:
   pgadmin_data:
+  frontend_node_modules:
 
 services:
 
@@ -39,7 +40,7 @@ services:
       PGADMIN_DEFAULT_PASSWORD: Admin123!
       PGADMIN_CONFIG_SERVER_MODE: "False"
     ports:
-      - "5050:80"
+      - "5200:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
@@ -70,7 +71,24 @@ services:
       - ./Backend:/app          # hot-reload en dev
       - /app/__pycache__        # exclut le cache du montage
     ports:
-      - "8000:8000"
+      - "8080:8000"   # 8000 bloqué par Windows (plage réservée 7959-8058) → accès via localhost:8080
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - genealogie-net
+
+  # ── Frontend Angular ────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: genealogie_frontend
+    restart: unless-stopped
+    volumes:
+      - ./Frontend:/app
+      - frontend_node_modules:/app/node_modules   # préserve les modules de l'image
+    ports:
+      - "4200:4200"
+    depends_on:
+      - backend
     networks:
       - genealogie-net

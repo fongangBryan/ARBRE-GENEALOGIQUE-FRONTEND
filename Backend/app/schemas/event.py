@@ -5,16 +5,14 @@ from uuid import UUID
 from enum import Enum
 
 class EventTypeEnum(str, Enum):
-    BIRTH = "birth"
-    DEATH = "death"
-    MARRIAGE = "marriage"
-    DIVORCE = "divorce"
-    BAPTISM = "baptism"
-    BURIAL = "burial"
-    EDUCATION = "education"
+    BIRTH      = "birth"
+    DEATH      = "death"
+    BAPTISM    = "baptism"
+    BURIAL     = "burial"
+    EDUCATION  = "education"
     EMPLOYMENT = "employment"
-    RESIDENCE = "residence"
-    CUSTOM = "custom"
+    RESIDENCE  = "residence"
+    CUSTOM     = "custom"
 
 class EventBase(BaseModel):
     person_id: UUID

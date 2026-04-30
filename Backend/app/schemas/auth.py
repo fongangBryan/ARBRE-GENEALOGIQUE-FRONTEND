@@ -26,7 +26,7 @@ class TwoFactorSetup(BaseModel):
     qr_code: str
 
 class TwoFactorVerify(BaseModel):
-    token: str
+    token: str = Field(..., pattern=r"^\d{6}$", description="Code TOTP à 6 chiffres")
 
 class LoginResponse(BaseModel):
     access_token: str

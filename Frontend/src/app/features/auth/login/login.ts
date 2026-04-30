@@ -1,30 +1,28 @@
 import { Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../core/services/auth.service';
+import { Router } from '@angular/router';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
 export class LoginComponent {
-  private fb      = inject(FormBuilder);
-  private router  = inject(Router);
-  private auth    = inject(AuthService);
+  private fb     = inject(FormBuilder);
+  private router = inject(Router);
+  private auth   = inject(AuthService);
 
   form = this.fb.group({
     email:    ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],
   });
 
-  loading     = signal(false);
-  error       = signal<string | null>(null);
-  showPass    = signal(false);
-  needs2fa    = signal(false);
-  userId      = signal<string | null>(null);
+  loading  = signal(false);
+  error    = signal<string | null>(null);
+  showPass = signal(false);
 
   get email()    { return this.form.get('email')!; }
   get password() { return this.form.get('password')!; }
@@ -40,11 +38,13 @@ export class LoginComponent {
     this.auth.login(this.form.getRawValue() as any).subscribe({
       next: res => {
         if (res.requires_2fa) {
-          this.needs2fa.set(true);
-          this.userId.set(res.user_id ?? null);
           this.loading.set(false);
+          this.router.navigate(['/verify-2fa']);
         } else {
-          this.router.navigate(['/dashboard']);
+          this.auth.fetchCurrentUser().subscribe({
+            next: () => this.auth.navigateByRole(),
+            error: () => this.auth.navigateByRole(),
+          });
         }
       },
       error: err => {

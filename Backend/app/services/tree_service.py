@@ -1,429 +1,310 @@
+import math
 from sqlalchemy.orm import Session
-from typing import List, Set, Dict, Optional
+from typing import List, Dict
 from uuid import UUID
 from collections import deque
 
-from app.services.relationship_service import RelationshipService
+from app.services.filiation_service import FiliationService
+from app.services.union_service import UnionService
 from app.services.person_service import PersonService
 from app.schemas.tree import CytoscapeGraph, CytoscapeNode, CytoscapeEdge
-from app.utils.helpers import format_name, truncate_text  # NOUVEAU
+from app.utils.helpers import format_name, truncate_text
+
 
 class TreeService:
     def __init__(self, db: Session):
         self.db = db
-        self.relationship_service = RelationshipService(db)
+        self.filiation_service = FiliationService(db)
+        self.union_service = UnionService(db)
         self.person_service = PersonService(db)
-    
-    def build_subtree(
-        self, 
-        root_id: UUID, 
-        depth: int, 
-        include_spouses: bool,
-        user_id: UUID
-    ) -> CytoscapeGraph:
-        """Construit un sous-arbre à partir d'une racine"""
+
+    # ── helpers ──────────────────────────────────────────────────────────────
+
+    def _node_data(self, person_id: UUID) -> dict | None:
+        person = self.person_service.get_person(person_id)
+        if not person:
+            return None
+        full_name = format_name(person.first_name, person.last_name, person.maiden_name)
+        return {
+            "id": str(person_id),
+            "label": truncate_text(full_name, 30),
+            "first_name": person.first_name,
+            "last_name": person.last_name,
+            "birth_date": person.birth_date,
+            "is_living": person.is_living,
+        }
+
+    def _spouse_id(self, union, person_id: UUID) -> UUID:
+        return union.person_id_2 if union.person_id_1 == person_id else union.person_id_1
+
+    def _all_neighbor_ids(self, person_id: UUID) -> List[UUID]:
+        """Parent IDs + child IDs + spouse IDs — used for path-finding."""
+        ids: List[UUID] = []
+        for f in self.filiation_service.get_parents(person_id):
+            ids.append(f.parent_id)
+        for f in self.filiation_service.get_children(person_id):
+            ids.append(f.child_id)
+        for u in self.union_service.get_unions_by_person(person_id):
+            ids.append(self._spouse_id(u, person_id))
+        return ids
+
+    # ── public methods ────────────────────────────────────────────────────────
+
+    def build_subtree(self, root_id: UUID, depth: int, include_spouses: bool, user_id: UUID) -> CytoscapeGraph:
         nodes: Dict[UUID, dict] = {}
         edges: List[dict] = []
-        processed = set()
-        
-        # BFS pour explorer l'arbre
-        queue = deque([(root_id, 0, None)])
-        
+        processed: set = set()
+
+        queue: deque = deque([(root_id, 0, None)])
+
         while queue:
             person_id, current_depth, parent_id = queue.popleft()
-            
+
             if person_id in processed or current_depth > depth:
                 continue
-            
             processed.add(person_id)
-            
-            # Ajouter le nœud - Utiliser helpers
-            person = self.person_service.get_person(person_id)
-            if person:
-                full_name = format_name(person.first_name, person.last_name, person.maiden_name)  # MODIFIÉ
-                nodes[person_id] = {
-                    "id": str(person_id),
-                    "label": truncate_text(full_name, 30),  # MODIFIÉ
-                    "birth_date": person.birth_date,
-                    "is_living": person.is_living,
-                    "first_name": person.first_name,
-                    "last_name": person.last_name
-                }
-            
-            # Ajouter l'arête parent-enfant
+
+            data = self._node_data(person_id)
+            if data:
+                nodes[person_id] = data
+
             if parent_id:
                 edges.append({
                     "id": f"{parent_id}-{person_id}",
                     "source": str(parent_id),
-                    "target": str(person_id)
+                    "target": str(person_id),
+                    "label": "parent-child",
                 })
-            
-            # Récupérer les enfants
-            children = self.relationship_service.get_children(person_id)
-            for child_rel in children:
-                child_id = child_rel.person_id_2
-                if child_id not in processed:
-                    queue.append((child_id, current_depth + 1, person_id))
-            
-            # Récupérer les parents
+
+            for fil in self.filiation_service.get_children(person_id):
+                if fil.child_id not in processed:
+                    queue.append((fil.child_id, current_depth + 1, person_id))
+
             if include_spouses or current_depth == 0:
-                parents = self.relationship_service.get_parents(person_id)
-                for parent_rel in parents:
-                    parent_id_rel = parent_rel.person_id_1
-                    if parent_id_rel not in processed:
-                        queue.append((parent_id_rel, current_depth + 1, person_id))
-            
-            # Récupérer les conjoints
+                for fil in self.filiation_service.get_parents(person_id):
+                    if fil.parent_id not in processed:
+                        queue.append((fil.parent_id, current_depth + 1, person_id))
+
             if include_spouses:
-                spouses = self.relationship_service.get_spouses(person_id)
-                for spouse_rel in spouses:
-                    spouse_id = spouse_rel.person_id_2 if spouse_rel.person_id_1 == person_id else spouse_rel.person_id_1
+                for union in self.union_service.get_unions_by_person(person_id):
+                    spouse_id = self._spouse_id(union, person_id)
                     if spouse_id not in processed:
                         queue.append((spouse_id, current_depth + 1, person_id))
-        
+
         return CytoscapeGraph(
-            nodes=[CytoscapeNode(data=node) for node in nodes.values()],
-            edges=[CytoscapeEdge(data=edge) for edge in edges]
+            nodes=[CytoscapeNode(data=n) for n in nodes.values()],
+            edges=[CytoscapeEdge(data=e) for e in edges],
         )
-    
-    # ... Le reste de la classe reste identique ...
 
     def build_neighbors_graph(self, person_id: UUID, radius: int, user_id: UUID) -> CytoscapeGraph:
-        """Construit un graphe des voisins"""
         nodes: Dict[UUID, dict] = {}
         edges: List[dict] = []
-        
-        # Ajouter la personne centrale
-        person = self.person_service.get_person(person_id)
-        if person:
-            nodes[person_id] = {
-                "id": str(person_id),
-                "label": f"{person.first_name} {person.last_name}"
-            }
-        
-        # Récupérer toutes les relations
-        relationships = self.relationship_service.get_relationships_by_person(person_id)
-        
-        for rel in relationships:
-            other_id = rel.person_id_2 if rel.person_id_1 == person_id else rel.person_id_1
-            
-            # Ajouter le voisin
-            if other_id not in nodes:
-                other = self.person_service.get_person(other_id)
-                if other:
-                    nodes[other_id] = {
-                        "id": str(other_id),
-                        "label": f"{other.first_name} {other.last_name}"
-                    }
-            
-            # Ajouter l'arête
-            edges.append({
-                "id": f"{person_id}-{other_id}",
-                "source": str(person_id),
-                "target": str(other_id),
-                "label": rel.type.value
-            })
-            
-            # Si radius > 1, ajouter les voisins des voisins
-            if radius > 1:
-                deeper_rels = self.relationship_service.get_relationships_by_person(other_id)
-                for deeper_rel in deeper_rels:
-                    deeper_other = deeper_rel.person_id_2 if deeper_rel.person_id_1 == other_id else deeper_rel.person_id_1
-                    if deeper_other != person_id:
-                        if deeper_other not in nodes:
-                            deeper_person = self.person_service.get_person(deeper_other)
-                            if deeper_person:
-                                nodes[deeper_other] = {
-                                    "id": str(deeper_other),
-                                    "label": f"{deeper_person.first_name} {deeper_person.last_name}"
-                                }
-                        edges.append({
-                            "id": f"{other_id}-{deeper_other}",
-                            "source": str(other_id),
-                            "target": str(deeper_other),
-                            "label": deeper_rel.type.value
-                        })
-        
+
+        data = self._node_data(person_id)
+        if data:
+            nodes[person_id] = data
+
+        def add_connections(center_id: UUID, depth: int):
+            # parent-child filiations
+            for fil in self.filiation_service.get_parents(center_id):
+                other_id = fil.parent_id
+                if other_id not in nodes:
+                    d = self._node_data(other_id)
+                    if d:
+                        nodes[other_id] = d
+                edges.append({"id": f"{other_id}-{center_id}", "source": str(other_id), "target": str(center_id), "label": "parent-child"})
+                if depth > 1:
+                    add_connections(other_id, depth - 1)
+
+            for fil in self.filiation_service.get_children(center_id):
+                other_id = fil.child_id
+                if other_id not in nodes:
+                    d = self._node_data(other_id)
+                    if d:
+                        nodes[other_id] = d
+                edges.append({"id": f"{center_id}-{other_id}", "source": str(center_id), "target": str(other_id), "label": "parent-child"})
+                if depth > 1:
+                    add_connections(other_id, depth - 1)
+
+            # unions
+            for union in self.union_service.get_unions_by_person(center_id):
+                other_id = self._spouse_id(union, center_id)
+                if other_id not in nodes:
+                    d = self._node_data(other_id)
+                    if d:
+                        nodes[other_id] = d
+                edges.append({"id": f"{center_id}-{other_id}-union", "source": str(center_id), "target": str(other_id), "label": union.union_type.value})
+
+        add_connections(person_id, radius)
+
         return CytoscapeGraph(
-            nodes=[CytoscapeNode(data=node) for node in nodes.values()],
-            edges=[CytoscapeEdge(data=edge) for edge in edges]
+            nodes=[CytoscapeNode(data=n) for n in nodes.values()],
+            edges=[CytoscapeEdge(data=e) for e in edges],
         )
-    
+
     def build_ancestors_tree(self, person_id: UUID, generations: int, user_id: UUID) -> CytoscapeGraph:
-        """Construit l'arbre des ascendants (format classique)"""
         nodes: Dict[UUID, dict] = {}
         edges: List[dict] = []
-        
-        # Positionnement pour affichage arbre généalogique
-        positions = self._calculate_ancestors_positions(person_id, generations)
-        
-        def add_ancestors(current_id: UUID, current_gen: int, position: int):
-            if current_gen > generations:
+
+        def add_ancestors(current_id: UUID, gen: int, pos: int):
+            if gen > generations:
                 return
-            
-            # Ajouter la personne
-            person = self.person_service.get_person(current_id)
-            if person and current_id not in nodes:
-                nodes[current_id] = {
-                    "id": str(current_id),
-                    "label": f"{person.first_name} {person.last_name}",
-                    "generation": current_gen,
-                    "position": position
-                }
-            
-            # Récupérer les parents
-            parents = self.relationship_service.get_parents(current_id)
-            for i, parent_rel in enumerate(parents[:2]):  # Max 2 parents
-                parent_id = parent_rel.person_id_1
-                child_position = position * 2 + i
-                
+            data = self._node_data(current_id)
+            if data and current_id not in nodes:
+                nodes[current_id] = {**data, "generation": gen, "position": pos}
+
+            for i, fil in enumerate(self.filiation_service.get_parents(current_id)[:2]):
+                parent_id = fil.parent_id
                 if parent_id not in nodes:
-                    add_ancestors(parent_id, current_gen + 1, child_position)
-                
-                edges.append({
-                    "id": f"{parent_id}-{current_id}",
-                    "source": str(parent_id),
-                    "target": str(current_id)
-                })
-        
+                    add_ancestors(parent_id, gen + 1, pos * 2 + i)
+                edges.append({"id": f"{parent_id}-{current_id}", "source": str(parent_id), "target": str(current_id)})
+
         add_ancestors(person_id, 0, 0)
-        
+
         return CytoscapeGraph(
-            nodes=[CytoscapeNode(data=node, position={"x": node.get("position", 0) * 100, "y": node.get("generation", 0) * 120}) for node in nodes.values()],
-            edges=[CytoscapeEdge(data=edge) for edge in edges]
+            nodes=[CytoscapeNode(data=n, position={"x": n.get("position", 0) * 100, "y": n.get("generation", 0) * 120}) for n in nodes.values()],
+            edges=[CytoscapeEdge(data=e) for e in edges],
         )
-    
+
     def _calculate_ancestors_positions(self, root_id: UUID, generations: int) -> Dict[UUID, tuple]:
-        """Calcule les positions pour l'affichage en arbre"""
-        positions = {}
-        
+        positions: Dict[UUID, tuple] = {}
+
         def compute(node_id: UUID, gen: int, pos: int):
             positions[node_id] = (gen, pos)
-            parents = self.relationship_service.get_parents(node_id)
-            for i, parent_rel in enumerate(parents[:2]):
-                compute(parent_rel.person_id_1, gen + 1, pos * 2 + i)
-        
+            for i, fil in enumerate(self.filiation_service.get_parents(node_id)[:2]):
+                compute(fil.parent_id, gen + 1, pos * 2 + i)
+
         compute(root_id, 0, 0)
         return positions
-    
+
     def build_descendants_tree(self, person_id: UUID, generations: int, user_id: UUID) -> CytoscapeGraph:
-        """Construit l'arbre des descendants"""
         nodes: Dict[UUID, dict] = {}
         edges: List[dict] = []
-        
-        def add_descendants(current_id: UUID, current_gen: int):
-            if current_gen > generations:
+
+        def add_descendants(current_id: UUID, gen: int):
+            if gen > generations:
                 return
-            
-            person = self.person_service.get_person(current_id)
-            if person and current_id not in nodes:
-                nodes[current_id] = {
-                    "id": str(current_id),
-                    "label": f"{person.first_name} {person.last_name}",
-                    "generation": current_gen
-                }
-            
-            children = self.relationship_service.get_children(current_id)
-            for child_rel in children:
-                child_id = child_rel.person_id_2
+            data = self._node_data(current_id)
+            if data and current_id not in nodes:
+                nodes[current_id] = {**data, "generation": gen}
+
+            for fil in self.filiation_service.get_children(current_id):
+                child_id = fil.child_id
                 if child_id not in nodes:
-                    add_descendants(child_id, current_gen + 1)
-                
-                edges.append({
-                    "id": f"{current_id}-{child_id}",
-                    "source": str(current_id),
-                    "target": str(child_id)
-                })
-        
+                    add_descendants(child_id, gen + 1)
+                edges.append({"id": f"{current_id}-{child_id}", "source": str(current_id), "target": str(child_id)})
+
         add_descendants(person_id, 0)
-        
+
         return CytoscapeGraph(
-            nodes=[CytoscapeNode(data=node) for node in nodes.values()],
-            edges=[CytoscapeEdge(data=edge) for edge in edges]
+            nodes=[CytoscapeNode(data=n) for n in nodes.values()],
+            edges=[CytoscapeEdge(data=e) for e in edges],
         )
-    
+
     def find_path_between(self, person_id_1: UUID, person_id_2: UUID, user_id: UUID) -> CytoscapeGraph:
-        """Trouve le chemin de parenté entre deux personnes (BFS)"""
-        # BFS pour trouver le chemin
-        queue = deque([(person_id_1, [person_id_1])])
+        queue: deque = deque([(person_id_1, [person_id_1])])
         visited = {person_id_1}
-        
+
         while queue:
             current_id, path = queue.popleft()
-            
+
             if current_id == person_id_2:
-                # Construire le graphe du chemin
-                nodes = {}
-                edges = []
-                
-                for i, node_id in enumerate(path):
-                    person = self.person_service.get_person(node_id)
-                    if person:
-                        nodes[node_id] = {
-                            "id": str(node_id),
-                            "label": f"{person.first_name} {person.last_name}"
-                        }
+                nodes: Dict[UUID, dict] = {}
+                edges: List[dict] = []
+                for i, nid in enumerate(path):
+                    data = self._node_data(nid)
+                    if data:
+                        nodes[nid] = data
                     if i > 0:
-                        edges.append({
-                            "id": f"{path[i-1]}-{node_id}",
-                            "source": str(path[i-1]),
-                            "target": str(node_id)
-                        })
-                
+                        edges.append({"id": f"{path[i-1]}-{nid}", "source": str(path[i-1]), "target": str(nid)})
                 return CytoscapeGraph(
-                    nodes=[CytoscapeNode(data=node) for node in nodes.values()],
-                    edges=[CytoscapeEdge(data=edge) for edge in edges]
+                    nodes=[CytoscapeNode(data=n) for n in nodes.values()],
+                    edges=[CytoscapeEdge(data=e) for e in edges],
                 )
-            
-            # Explorer les voisins
-            neighbors = self.relationship_service.get_relationships_by_person(current_id)
-            for rel in neighbors:
-                neighbor_id = rel.person_id_2 if rel.person_id_1 == current_id else rel.person_id_1
+
+            for neighbor_id in self._all_neighbor_ids(current_id):
                 if neighbor_id not in visited:
                     visited.add(neighbor_id)
                     queue.append((neighbor_id, path + [neighbor_id]))
-        
-        # Aucun chemin trouvé
+
         return CytoscapeGraph(nodes=[], edges=[])
-    
+
     def build_family_group(self, person_id: UUID, user_id: UUID) -> CytoscapeGraph:
-        """Construit le groupe familial complet"""
         nodes: Dict[UUID, dict] = {}
         edges: List[dict] = []
-        
-        # Ajouter la personne
-        person = self.person_service.get_person(person_id)
-        if person:
-            nodes[person_id] = {
-                "id": str(person_id),
-                "label": f"{person.first_name} {person.last_name}",
-                "class": "center"
-            }
-        
-        # Ajouter les parents
-        parents = self.relationship_service.get_parents(person_id)
-        for parent_rel in parents:
-            parent_id = parent_rel.person_id_1
-            parent = self.person_service.get_person(parent_id)
-            if parent and parent_id not in nodes:
-                nodes[parent_id] = {
-                    "id": str(parent_id),
-                    "label": f"{parent.first_name} {parent.last_name}",
-                    "class": "parent"
-                }
-            edges.append({
-                "id": f"{parent_id}-{person_id}",
-                "source": str(parent_id),
-                "target": str(person_id),
-                "class": "parent-child"
-            })
-        
-        # Ajouter les conjoints
-        spouses = self.relationship_service.get_spouses(person_id)
-        for spouse_rel in spouses:
-            spouse_id = spouse_rel.person_id_2 if spouse_rel.person_id_1 == person_id else spouse_rel.person_id_1
-            spouse = self.person_service.get_person(spouse_id)
-            if spouse and spouse_id not in nodes:
-                nodes[spouse_id] = {
-                    "id": str(spouse_id),
-                    "label": f"{spouse.first_name} {spouse.last_name}",
-                    "class": "spouse"
-                }
-            edges.append({
-                "id": f"{person_id}-{spouse_id}",
-                "source": str(person_id),
-                "target": str(spouse_id),
-                "class": "couple"
-            })
-        
-        # Ajouter les enfants
-        children = self.relationship_service.get_children(person_id)
-        for child_rel in children:
-            child_id = child_rel.person_id_2
-            child = self.person_service.get_person(child_id)
-            if child and child_id not in nodes:
-                nodes[child_id] = {
-                    "id": str(child_id),
-                    "label": f"{child.first_name} {child.last_name}",
-                    "class": "child"
-                }
-            edges.append({
-                "id": f"{person_id}-{child_id}",
-                "source": str(person_id),
-                "target": str(child_id),
-                "class": "parent-child"
-            })
-        
-        # Ajouter aussi les enfants des conjoints
-        for spouse_rel in spouses:
-            spouse_id = spouse_rel.person_id_2 if spouse_rel.person_id_1 == person_id else spouse_rel.person_id_1
-            spouse_children = self.relationship_service.get_children(spouse_id)
-            for child_rel in spouse_children:
-                child_id = child_rel.person_id_2
-                if child_id != person_id and child_id not in nodes:
-                    child = self.person_service.get_person(child_id)
-                    if child:
-                        nodes[child_id] = {
-                            "id": str(child_id),
-                            "label": f"{child.first_name} {child.last_name}",
-                            "class": "half-sibling"
-                        }
-                    edges.append({
-                        "id": f"{spouse_id}-{child_id}",
-                        "source": str(spouse_id),
-                        "target": str(child_id),
-                        "class": "parent-child"
-                    })
-        
+
+        data = self._node_data(person_id)
+        if data:
+            nodes[person_id] = {**data, "class": "center"}
+
+        for fil in self.filiation_service.get_parents(person_id):
+            pid = fil.parent_id
+            if pid not in nodes:
+                d = self._node_data(pid)
+                if d:
+                    nodes[pid] = {**d, "class": "parent"}
+            edges.append({"id": f"{pid}-{person_id}", "source": str(pid), "target": str(person_id), "class": "parent-child"})
+
+        for union in self.union_service.get_unions_by_person(person_id):
+            spouse_id = self._spouse_id(union, person_id)
+            if spouse_id not in nodes:
+                d = self._node_data(spouse_id)
+                if d:
+                    nodes[spouse_id] = {**d, "class": "spouse"}
+            edges.append({"id": f"{person_id}-{spouse_id}-union", "source": str(person_id), "target": str(spouse_id), "class": "couple"})
+
+            # Enfants communs (ceux dans les filiations des deux parents)
+            spouse_children = {f.child_id for f in self.filiation_service.get_children(spouse_id)}
+            for fil in self.filiation_service.get_children(person_id):
+                child_id = fil.child_id
+                if child_id not in nodes:
+                    d = self._node_data(child_id)
+                    if d:
+                        nodes[child_id] = {**d, "class": "child"}
+                edges.append({"id": f"{person_id}-{child_id}", "source": str(person_id), "target": str(child_id), "class": "parent-child"})
+
+        # Enfants sans conjoint commun
+        for fil in self.filiation_service.get_children(person_id):
+            child_id = fil.child_id
+            if child_id not in nodes:
+                d = self._node_data(child_id)
+                if d:
+                    nodes[child_id] = {**d, "class": "child"}
+                edges.append({"id": f"{person_id}-{child_id}", "source": str(person_id), "target": str(child_id), "class": "parent-child"})
+
         return CytoscapeGraph(
-            nodes=[CytoscapeNode(data=node, classes=node.get("class")) for node in nodes.values()],
-            edges=[CytoscapeEdge(data=edge, classes=edge.get("class")) for edge in edges]
+            nodes=[CytoscapeNode(data=n, classes=n.get("class")) for n in nodes.values()],
+            edges=[CytoscapeEdge(data=e, classes=e.get("class")) for e in edges],
         )
-    
+
     def build_pedigree_wheel(self, person_id: UUID, generations: int, user_id: UUID) -> CytoscapeGraph:
-        """Construit l'arbre en roue (pedigree) avec positions circulaires"""
         nodes: Dict[UUID, dict] = {}
         edges: List[dict] = []
-        
-        def add_to_wheel(current_id: UUID, sosa_number: int, current_gen: int):
-            if current_gen > generations:
+
+        def add_to_wheel(current_id: UUID, sosa: int, gen: int):
+            if gen > generations:
                 return
-            
-            person = self.person_service.get_person(current_id)
-            if person and current_id not in nodes:
-                # Calculer l'angle pour la position circulaire
-                angle = (sosa_number * 360 / (2 ** current_gen)) if current_gen > 0 else 0
-                radius = current_gen * 150
-                import math
-                x = radius * math.cos(math.radians(angle))
-                y = radius * math.sin(math.radians(angle))
-                
+            data = self._node_data(current_id)
+            if data and current_id not in nodes:
+                angle = (sosa * 360 / (2 ** gen)) if gen > 0 else 0
+                radius = gen * 150
                 nodes[current_id] = {
-                    "id": str(current_id),
-                    "label": f"{person.first_name} {person.last_name}",
-                    "sosa": sosa_number,
-                    "generation": current_gen,
-                    "x": x,
-                    "y": y
+                    **data,
+                    "sosa": sosa,
+                    "generation": gen,
+                    "x": radius * math.cos(math.radians(angle)),
+                    "y": radius * math.sin(math.radians(angle)),
                 }
-            
-            # Ajouter les parents
-            parents = self.relationship_service.get_parents(current_id)
-            for i, parent_rel in enumerate(parents[:2]):
-                parent_id = parent_rel.person_id_1
-                new_sosa = sosa_number * 2 + i
+
+            for i, fil in enumerate(self.filiation_service.get_parents(current_id)[:2]):
+                parent_id = fil.parent_id
                 if parent_id not in nodes:
-                    add_to_wheel(parent_id, new_sosa, current_gen + 1)
-                
-                edges.append({
-                    "id": f"{parent_id}-{current_id}",
-                    "source": str(parent_id),
-                    "target": str(current_id)
-                })
-        
+                    add_to_wheel(parent_id, sosa * 2 + i, gen + 1)
+                edges.append({"id": f"{parent_id}-{current_id}", "source": str(parent_id), "target": str(current_id)})
+
         add_to_wheel(person_id, 1, 0)
-        
+
         return CytoscapeGraph(
-            nodes=[CytoscapeNode(data=node, position={"x": node.get("x", 0), "y": node.get("y", 0)}) for node in nodes.values()],
-            edges=[CytoscapeEdge(data=edge) for edge in edges]
+            nodes=[CytoscapeNode(data=n, position={"x": n.get("x", 0), "y": n.get("y", 0)}) for n in nodes.values()],
+            edges=[CytoscapeEdge(data=e) for e in edges],
         )

@@ -37,6 +37,15 @@ class UserResponse(UserBase):
     is_2fa_enabled: bool
     created_at: datetime
     last_login: Optional[datetime] = None
-    
+
     class Config:
         from_attributes = True
+
+from typing import List as _List  # évite conflit avec List importé en dehors
+
+class UserListResponse(BaseModel):
+    items: _List[UserResponse]
+    total: int
+    page: int
+    limit: int
+    pages: int

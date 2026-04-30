@@ -4,7 +4,7 @@ from typing import Optional, List
 from uuid import UUID
 
 from app.db.session import get_db
-from app.schemas.user import UserResponse, UserUpdate, UserRoleUpdate
+from app.schemas.user import UserResponse, UserUpdate, UserRoleUpdate, UserListResponse
 from app.schemas.acl import AccessControlCreate, AccessControlResponse
 from app.schemas.common import StatsResponse, SystemInfoResponse
 from app.services.user_service import UserService
@@ -19,7 +19,7 @@ router = APIRouter(prefix="/admin", tags=["Admin"], dependencies=[Depends(requir
 
 # ============ GESTION DES UTILISATEURS ============
 
-@router.get("/users", response_model=List[UserResponse])
+@router.get("/users", response_model=UserListResponse)
 def list_users(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
@@ -29,7 +29,8 @@ def list_users(
     """Liste tous les utilisateurs (Admin uniquement)"""
     user_service = UserService(db)
     users, total = user_service.list_users(search, page, limit)
-    return users
+    pages = (total + limit - 1) // limit if total > 0 else 1
+    return UserListResponse(items=users, total=total, page=page, limit=limit, pages=pages)
 
 
 @router.get("/users/{user_id}", response_model=UserResponse)

@@ -17,7 +17,10 @@ export interface TokenResponse {
   token_type: string;
 }
 
-export interface LoginResponse extends TokenResponse {
+export interface LoginResponse {
   requires_2fa: boolean;
   user_id?: string;
+  access_token?: string;
+  refresh_token?: string;
+  token_type?: string;
 }

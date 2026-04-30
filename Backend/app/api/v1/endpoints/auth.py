@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 
 from app.db.session import get_db
-from app.schemas.auth import UserRegister, UserLogin, Token, TokenRefresh, LoginResponse
+from app.schemas.auth import UserRegister, UserLogin, Token, TokenRefresh, LoginResponse, TwoFactorSetup, TwoFactorVerify
 from app.services.auth_service import AuthService
 from app.services.user_service import UserService  # NOUVEAU
 from app.core.security import create_access_token, create_refresh_token, decode_token
@@ -85,7 +85,7 @@ def refresh_token(refresh_data: TokenRefresh, db: Session = Depends(get_db)):
     
     return Token(access_token=new_access_token, refresh_token=new_refresh_token)
 
-@router.post("/setup-2fa")
+@router.post("/setup-2fa", response_model=TwoFactorSetup)
 def setup_two_factor(
     current_user = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -95,12 +95,21 @@ def setup_two_factor(
 
 @router.post("/verify-2fa")
 def verify_two_factor(
-    token: str,
+    body: TwoFactorVerify,
     current_user = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     auth_service = AuthService(db)
-    return auth_service.verify_two_factor(current_user, token)
+    return auth_service.verify_two_factor(current_user, body.token)
+
+@router.post("/disable-2fa")
+def disable_two_factor(
+    body: TwoFactorVerify,
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    auth_service = AuthService(db)
+    return auth_service.disable_two_factor(current_user, body.token)
 
 @router.post("/logout")
 def logout(current_user = Depends(get_current_user)):

@@ -1,13 +1,15 @@
-from sqlalchemy.orm import Session
-from fastapi import HTTPException, status
+from datetime import datetime, timezone
 from typing import Tuple, Optional
+
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
 
 from app.models.user import User
 from app.schemas.auth import UserRegister
-from app.core.security import verify_password, get_password_hash
+from app.core.security import verify_password
 from app.utils.totp import generate_2fa_secret, get_totp_uri, generate_qr_code_base64, verify_2fa_token
-from app.services.user_service import UserService  # NOUVEAU
-from app.core.exceptions import ConflictException, AuthenticationException  # NOUVEAU
+from app.services.user_service import UserService
+from app.core.exceptions import ConflictException, AuthenticationException
 
 class AuthService:
     def __init__(self, db: Session):
@@ -47,9 +49,7 @@ class AuthService:
             if not verify_2fa_token(user.totp_secret, two_factor_code):
                 raise AuthenticationException("Invalid 2FA code")
         
-        # Update last login
-        from datetime import datetime
-        user.last_login = datetime.utcnow()
+        user.last_login = datetime.now(timezone.utc)
         self.db.commit()
         
         return user, False
@@ -66,13 +66,26 @@ class AuthService:
     
     def verify_two_factor(self, user: User, token: str):
         if not user.temp_2fa_secret:
-            raise HTTPException(status_code=400, detail="2FA not initialized")
-        
-        if verify_2fa_token(user.temp_2fa_secret, token):
-            user.is_2fa_enabled = True
-            user.totp_secret = user.temp_2fa_secret
-            user.temp_2fa_secret = None
-            self.db.commit()
-            return {"message": "2FA enabled successfully"}
-        
-        raise HTTPException(status_code=400, detail="Invalid token")
+            raise HTTPException(status_code=400, detail="2FA not initialized. Call /setup-2fa first.")
+
+        if not verify_2fa_token(user.temp_2fa_secret, token):
+            raise HTTPException(status_code=400, detail="Invalid TOTP code")
+
+        user.is_2fa_enabled = True
+        user.totp_secret = user.temp_2fa_secret
+        user.temp_2fa_secret = None
+        self.db.commit()
+        return {"message": "2FA enabled successfully"}
+
+    def disable_two_factor(self, user: User, token: str):
+        if not user.is_2fa_enabled:
+            raise HTTPException(status_code=400, detail="2FA is not enabled on this account")
+
+        if not verify_2fa_token(user.totp_secret, token):
+            raise HTTPException(status_code=400, detail="Invalid TOTP code")
+
+        user.is_2fa_enabled = False
+        user.totp_secret = None
+        user.temp_2fa_secret = None
+        self.db.commit()
+        return {"message": "2FA disabled successfully"}

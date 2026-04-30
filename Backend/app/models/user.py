@@ -19,7 +19,7 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     first_name = Column(String(100), nullable=True)
     last_name = Column(String(100), nullable=True)
-    role = Column(SQLEnum(UserRole), default=UserRole.READER)
+    role = Column(SQLEnum(UserRole), default=UserRole.EDITOR)
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
     

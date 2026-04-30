@@ -32,7 +32,7 @@ class UserService:
             password_hash=get_password_hash(password),
             first_name=first_name,
             last_name=last_name,
-            role=UserRole.READER,
+            role=UserRole.EDITOR,
             is_active=True,
             is_verified=False
         )

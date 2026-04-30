@@ -15,7 +15,8 @@ from app.config import settings
 from app.db.base import Base
 from app.models.user import User
 from app.models.person import Person
-from app.models.relationship import Relationship
+from app.models.filiation import Filiation
+from app.models.union import Union
 from app.models.event import Event
 from app.models.media import Media
 from app.models.access_control import AccessControl
