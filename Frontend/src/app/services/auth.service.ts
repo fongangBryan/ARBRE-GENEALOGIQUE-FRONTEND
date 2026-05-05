@@ -1,12 +1,12 @@
-import { Injectable, inject, signal } from '@angular/core';
+﻿import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { tap, switchMap } from 'rxjs/operators';
+import { tap, map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { LoginRequest, LoginResponse, RegisterRequest, TokenResponse } from '../models/auth.model';
 import { User } from '../models/user.model';
 
-const API = 'http://localhost:8080/api/v1';
+const API = 'http://localhost:8090/api/v1';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -75,6 +75,31 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
+  refreshTokens(refreshToken: string): Observable<string> {
+    return this.http
+      .post<TokenResponse>(`${API}/auth/refresh`, { refresh_token: refreshToken })
+      .pipe(
+        tap(res => this.storeTokens(res.access_token, res.refresh_token)),
+        map(res => res.access_token)
+      );
+  }
+
+  forgotPassword(email: string) {
+    return this.http.post<{ message: string }>(`${API}/auth/forgot-password`, { email });
+  }
+
+  resetPassword(token: string, new_password: string) {
+    return this.http.post<{ message: string }>(`${API}/auth/reset-password`, { token, new_password });
+  }
+
+  verifyEmail(token: string) {
+    return this.http.post<{ message: string }>(`${API}/auth/verify-email?token=${token}`, {});
+  }
+
+  resendVerification() {
+    return this.http.post<{ message: string }>(`${API}/auth/resend-verification`, {});
+  }
+
   getToken() { return localStorage.getItem('access_token'); }
 
   private storeTokens(access: string, refresh: string) {
@@ -82,3 +107,4 @@ export class AuthService {
     localStorage.setItem('refresh_token', refresh);
   }
 }
+

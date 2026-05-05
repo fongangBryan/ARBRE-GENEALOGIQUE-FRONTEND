@@ -1,0 +1,569 @@
+<app-shell [pageTitle]="person()?.first_name + ' ' + person()?.last_name" pageSubtitle="Fiche détaillée">
+
+  @if (success()) {
+    <div class="alert-success"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>{{ success() }}</div>
+  }
+  @if (error()) {
+    <div class="alert-error"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>{{ error() }}</div>
+  }
+
+  <!-- Back -->
+  <a routerLink="/members" class="back-link">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    Retour aux membres
+  </a>
+
+  @if (loading()) {
+    <div class="sk-header">
+      <div class="sk sk-avatar"></div>
+      <div class="sk-lines"><div class="sk sk-h1"></div><div class="sk sk-h2"></div></div>
+    </div>
+  } @else if (person()) {
+
+    <!-- ── Person header card ── -->
+    <div class="person-header">
+      <div class="ph-avatar" [class.deceased]="!person()!.is_living">
+        {{ initials(person()!) }}
+      </div>
+      <div class="ph-info">
+        <div class="ph-name-row">
+          <h1 class="ph-name">{{ person()!.first_name }} {{ person()!.last_name }}
+            @if (person()!.maiden_name) { <span class="ph-maiden">née {{ person()!.maiden_name }}</span> }
+          </h1>
+          <span class="status-badge" [class.alive]="person()!.is_living">
+            {{ person()!.is_living ? 'Vivant(e)' : 'Décédé(e)' }}
+          </span>
+        </div>
+        <div class="ph-meta">
+          @if (person()!.gender) { <span class="ph-chip">{{ genderIcon(person()!.gender) }} {{ person()!.gender === 'male' ? 'Homme' : person()!.gender === 'female' ? 'Femme' : 'Autre' }}</span> }
+          @if (person()!.occupation) { <span class="ph-chip">{{ person()!.occupation }}</span> }
+          @if (person()!.nationality) { <span class="ph-chip">{{ person()!.nationality }}</span> }
+        </div>
+      </div>
+      @if (isEditor()) {
+        <button class="btn-edit-profile" (click)="openEdit()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Modifier
+        </button>
+      }
+    </div>
+
+    <!-- ── Tabs ── -->
+    <div class="tabs">
+      <button class="tab-btn" [class.active]="activeTab() === 'profile'" (click)="activeTab.set('profile')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Profil
+      </button>
+      <button class="tab-btn" [class.active]="activeTab() === 'family'" (click)="activeTab.set('family')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Famille
+        <span class="tab-count">{{ parents().length + children().length + unions().length }}</span>
+      </button>
+      <button class="tab-btn" [class.active]="activeTab() === 'media'" (click)="activeTab.set('media')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Photos
+        <span class="tab-count">{{ media().length }}</span>
+      </button>
+      <button class="tab-btn" [class.active]="activeTab() === 'events'" (click)="activeTab.set('events')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Événements
+        <span class="tab-count">{{ events().length }}</span>
+      </button>
+    </div>
+
+    <!-- ══════════════════════════════ PROFIL ══════════════════════════════════ -->
+    @if (activeTab() === 'profile') {
+      <div class="detail-card">
+        <div class="section-hd"><h3>Informations</h3></div>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Naissance</span>
+            <span class="info-val">
+              @if (person()!.birth_date) { <span class="date-pill">{{ person()!.birth_date }}</span> }
+              @if (person()!.birth_place) { {{ person()!.birth_place }} }
+              @if (!person()!.birth_date && !person()!.birth_place) { — }
+            </span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Décès</span>
+            <span class="info-val">
+              @if (person()!.death_date) { <span class="date-pill death">{{ person()!.death_date }}</span> }
+              @if (person()!.death_place) { {{ person()!.death_place }} }
+              @if (!person()!.death_date && !person()!.death_place) { — }
+            </span>
+          </div>
+          @if (person()!.occupation)   { <div class="info-item"><span class="info-label">Profession</span><span class="info-val">{{ person()!.occupation }}</span></div> }
+          @if (person()!.nationality)  { <div class="info-item"><span class="info-label">Nationalité</span><span class="info-val">{{ person()!.nationality }}</span></div> }
+          @if (person()!.maiden_name)  { <div class="info-item"><span class="info-label">Nom de naissance</span><span class="info-val">{{ person()!.maiden_name }}</span></div> }
+          <div class="info-item"><span class="info-label">Confidentialité</span><span class="info-val info-privacy">{{ person()!.privacy_level }}</span></div>
+        </div>
+        @if (person()!.biography) {
+          <div class="bio-section">
+            <h4>Biographie</h4>
+            <p class="bio-text">{{ person()!.biography }}</p>
+          </div>
+        }
+      </div>
+
+      <!-- Tags -->
+      <div class="detail-card">
+        <div class="section-hd">
+          <h3>Tags <span class="count-badge">{{ personTags().length }}</span></h3>
+          @if (isEditor()) {
+            <button class="btn-section-add" (click)="openTagPicker()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Ajouter
+            </button>
+          }
+        </div>
+        @if (personTags().length === 0) {
+          <p class="empty-section">Aucun tag attribué.</p>
+        } @else {
+          <div class="tags-list">
+            @for (tag of personTags(); track tag.id) {
+              <span class="tag-badge" [style.background]="tag.color + '22'" [style.border-color]="tag.color" [style.color]="tag.color">
+                {{ tag.label }}
+                @if (isEditor()) {
+                  <button class="tag-remove" (click)="removeTag(tag)" title="Retirer">✕</button>
+                }
+              </span>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ══════════════════════════════ FAMILLE ════════════════════════════════ -->
+    @if (activeTab() === 'family') {
+      <!-- Parents -->
+      <div class="detail-card">
+        <div class="section-hd">
+          <h3>Parents <span class="count-badge">{{ parents().length }}</span></h3>
+          @if (isEditor()) {
+            <button class="btn-section-add" (click)="openAddFiliation('parent')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Ajouter
+            </button>
+          }
+        </div>
+        @if (parents().length === 0) {
+          <p class="empty-section">Aucun parent enregistré.</p>
+        } @else {
+          <div class="rel-list">
+            @for (f of parents(); track f.id) {
+              <div class="rel-item">
+                <div class="rel-avatar">{{ personName(f.parent_id).charAt(0) }}</div>
+                <div class="rel-info">
+                  <a [routerLink]="['/members', f.parent_id]" class="rel-name">{{ personName(f.parent_id) }}</a>
+                  <span class="rel-type">{{ filTypeLabel(f.filiation_type) }}</span>
+                </div>
+                @if (isEditor()) {
+                  <button class="btn-rel-del" (click)="openDelete('filiation-parent', f.id, personName(f.parent_id))" title="Retirer">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Children -->
+      <div class="detail-card">
+        <div class="section-hd">
+          <h3>Enfants <span class="count-badge">{{ children().length }}</span></h3>
+          @if (isEditor()) {
+            <button class="btn-section-add" (click)="openAddFiliation('child')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Ajouter
+            </button>
+          }
+        </div>
+        @if (children().length === 0) {
+          <p class="empty-section">Aucun enfant enregistré.</p>
+        } @else {
+          <div class="rel-list">
+            @for (f of children(); track f.id) {
+              <div class="rel-item">
+                <div class="rel-avatar">{{ personName(f.child_id).charAt(0) }}</div>
+                <div class="rel-info">
+                  <a [routerLink]="['/members', f.child_id]" class="rel-name">{{ personName(f.child_id) }}</a>
+                  <span class="rel-type">{{ filTypeLabel(f.filiation_type) }}</span>
+                </div>
+                @if (isEditor()) {
+                  <button class="btn-rel-del" (click)="openDelete('filiation-child', f.id, personName(f.child_id))" title="Retirer">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Unions -->
+      <div class="detail-card">
+        <div class="section-hd">
+          <h3>Unions <span class="count-badge">{{ unions().length }}</span></h3>
+          @if (isEditor()) {
+            <button class="btn-section-add" (click)="openAddUnion()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Ajouter
+            </button>
+          }
+        </div>
+        @if (unions().length === 0) {
+          <p class="empty-section">Aucune union enregistrée.</p>
+        } @else {
+          <div class="rel-list">
+            @for (u of unions(); track u.id) {
+              <div class="rel-item">
+                <div class="rel-avatar union-av">♥</div>
+                <div class="rel-info">
+                  <span class="rel-name">{{ partnerOf(u) }}</span>
+                  <span class="rel-type">{{ unionTypeLabel(u.union_type) }}
+                    @if (u.date_union) { · {{ u.date_union }} }
+                    <span class="status-mini" [class.alive]="u.statut === 'actif'">{{ u.statut === 'actif' ? 'Actif' : 'Dissous' }}</span>
+                  </span>
+                </div>
+                @if (isEditor()) {
+                  <button class="btn-rel-edit" (click)="openEditUnion(u)" title="Modifier">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                  <button class="btn-rel-del" (click)="openDelete('union', u.id, 'l\'union avec ' + partnerOf(u))" title="Supprimer">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ══════════════════════════════ PHOTOS ═════════════════════════════════ -->
+    @if (activeTab() === 'media') {
+      <div class="detail-card">
+        <div class="section-hd">
+          <h3>Photos & Médias <span class="count-badge">{{ media().length }}</span></h3>
+          @if (isEditor()) {
+            <button class="btn-section-add" (click)="triggerUpload()" [disabled]="uploading()">
+              @if (uploading()) { <span class="spinner-sm"></span> {{ uploadProgress() }}% }
+              @else {
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+                Uploader
+              }
+            </button>
+            <input #uploadInput type="file" accept="image/*,video/*,application/pdf" style="display:none" (change)="onFileChange($event)"/>
+          }
+        </div>
+        @if (uploading()) {
+          <div class="upload-bar"><div class="upload-fill" [style.width.%]="uploadProgress()"></div></div>
+        }
+        @if (media().length === 0 && !uploading()) {
+          <p class="empty-section">Aucun média pour ce membre.</p>
+        } @else {
+          <div class="media-grid">
+            @for (m of media(); track m.id) {
+              <div class="media-thumb-card">
+                @if (isImage(m)) {
+                  <img [src]="getMediaSrc(m)" [alt]="fileName(m)" loading="lazy"/>
+                } @else {
+                  <div class="file-icon">{{ fileName(m).split('.').pop()?.toUpperCase() }}</div>
+                }
+                <p class="media-name">{{ fileName(m) }}</p>
+                @if (isEditor()) {
+                  <button class="media-del-btn" (click)="openDelete('media', m.id, fileName(m))">✕</button>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ══════════════════════════════ ÉVÉNEMENTS ═════════════════════════════ -->
+    @if (activeTab() === 'events') {
+      <div class="detail-card">
+        <div class="section-hd">
+          <h3>Événements de vie <span class="count-badge">{{ events().length }}</span></h3>
+          @if (isEditor()) {
+            <button class="btn-section-add" (click)="openAddEvent()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Ajouter
+            </button>
+          }
+        </div>
+        @if (events().length === 0) {
+          <p class="empty-section">Aucun événement enregistré.</p>
+        } @else {
+          <div class="timeline">
+            @for (e of events(); track e.id) {
+              <div class="tl-item">
+                <div class="tl-dot">{{ eventIcon(e.event_type) }}</div>
+                <div class="tl-line"></div>
+                <div class="tl-content">
+                  <div class="tl-hd">
+                    <span class="tl-type">{{ eventTypeLabel(e.event_type) }}</span>
+                    @if (e.date_start) {
+                      <span class="tl-date">{{ e.date_start }}
+                        @if (e.date_end) { → {{ e.date_end }} }
+                      </span>
+                    }
+                    @if (isEditor()) {
+                      <div class="tl-actions">
+                        <button class="btn-rel-edit" (click)="openEditEvent(e)">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                        <button class="btn-rel-del" (click)="openDelete('event', e.id, eventTypeLabel(e.event_type))">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                  @if (e.place)       { <p class="tl-place">📍 {{ e.place }}</p> }
+                  @if (e.description) { <p class="tl-desc">{{ e.description }}</p> }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+  }<!-- end @else if (person()) -->
+
+</app-shell>
+
+<!-- ══════════════ MODAL TAG PICKER ══════════════ -->
+@if (tagPickerOpen()) {
+  <div class="modal-bg" (click)="closeTagPicker()">
+    <div class="modal modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-hd">
+        <h2>Ajouter un tag</h2>
+        <button class="modal-x" (click)="closeTagPicker()">✕</button>
+      </div>
+      <div class="modal-body" style="gap:16px">
+        <!-- Existing tags to assign -->
+        @if (availableTags().length > 0) {
+          <div>
+            <p class="modal-label">Tags disponibles</p>
+            <div class="tags-picker-list">
+              @for (tag of availableTags(); track tag.id) {
+                <button class="tag-pick-btn" [style.border-color]="tag.color" [style.color]="tag.color"
+                  (click)="addTag(tag); closeTagPicker()">
+                  <span class="tag-dot" [style.background]="tag.color"></span>
+                  {{ tag.label }}
+                </button>
+              }
+            </div>
+          </div>
+        } @else {
+          <p class="empty-section">Tous les tags existants sont déjà attribués.</p>
+        }
+
+        <!-- Quick create new tag -->
+        <div class="tag-create-section">
+          <p class="modal-label">Créer un nouveau tag</p>
+          <div class="tag-create-row">
+            <input class="tag-create-input" type="text" placeholder="Nom du tag…"
+              [ngModel]="newTagLabel()" (ngModelChange)="newTagLabel.set($event)"/>
+            <input type="color" class="tag-color-pick" [ngModel]="newTagColor()"
+              (ngModelChange)="newTagColor.set($event)" title="Couleur"/>
+            <button class="btn-save btn-sm" (click)="createAndAddTag()"
+              [disabled]="!newTagLabel().trim() || savingTag()">
+              @if (savingTag()) { <span class="spinner-dark"></span> } @else { Créer }
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══════════════ MODAL EDIT PERSON ══════════════ -->
+@if (editModal()) {
+  <div class="modal-bg" (click)="editModal.set(false)">
+    <div class="modal modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-hd"><h2>Modifier le profil</h2><button class="modal-x" (click)="editModal.set(false)">✕</button></div>
+      <div class="modal-body" [formGroup]="editForm">
+        <div class="row-2">
+          <div class="field"><label>Prénom *</label><input formControlName="first_name"/></div>
+          <div class="field"><label>Nom *</label><input formControlName="last_name"/></div>
+        </div>
+        <div class="row-2">
+          <div class="field"><label>Nom de naissance</label><input formControlName="maiden_name"/></div>
+          <div class="field"><label>Genre</label>
+            <select formControlName="gender"><option value="">—</option><option value="male">Homme</option><option value="female">Femme</option><option value="other">Autre</option></select>
+          </div>
+        </div>
+        <div class="row-2">
+          <div class="field"><label>Date naissance</label><input formControlName="birth_date" placeholder="AAAA-MM-JJ"/></div>
+          <div class="field"><label>Lieu naissance</label><input formControlName="birth_place"/></div>
+        </div>
+        <div class="row-2">
+          <div class="field"><label>Date décès</label><input formControlName="death_date" placeholder="AAAA-MM-JJ"/></div>
+          <div class="field"><label>Lieu décès</label><input formControlName="death_place"/></div>
+        </div>
+        <div class="row-2">
+          <div class="field"><label>Profession</label><input formControlName="occupation"/></div>
+          <div class="field"><label>Nationalité</label><input formControlName="nationality"/></div>
+        </div>
+        <div class="field"><label>Biographie</label><textarea formControlName="biography" rows="3"></textarea></div>
+        <div class="row-2">
+          <div class="field"><label>Confidentialité</label>
+            <select formControlName="privacy_level"><option value="public">Public</option><option value="family">Famille</option><option value="private">Privé</option></select>
+          </div>
+          <div class="field field-toggle">
+            <label>Encore en vie</label>
+            <label class="toggle"><input type="checkbox" formControlName="is_living"/><span class="slider"></span></label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-ft">
+        <button class="btn-cancel" (click)="editModal.set(false)">Annuler</button>
+        <button class="btn-save" (click)="saveEdit()" [disabled]="saving()">
+          @if (saving()) { <span class="spinner"></span> } @else { Enregistrer }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══════════════ MODAL FILIATION ══════════════ -->
+@if (filiationModal()) {
+  <div class="modal-bg" (click)="filiationModal.set(false)">
+    <div class="modal modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-hd">
+        <h2>{{ filiationRole() === 'parent' ? 'Ajouter un parent' : 'Ajouter un enfant' }}</h2>
+        <button class="modal-x" (click)="filiationModal.set(false)">✕</button>
+      </div>
+      <div class="modal-body" [formGroup]="filiationForm">
+        <div class="field">
+          <label>{{ filiationRole() === 'parent' ? 'Parent' : 'Enfant' }} *</label>
+          <select formControlName="person_id">
+            <option value="">— Sélectionner —</option>
+            @for (p of availablePersons(); track p.id) {
+              <option [value]="p.id">{{ p.first_name }} {{ p.last_name }}</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label>Type de filiation</label>
+          <select formControlName="filiation_type">
+            <option value="biological">Biologique</option>
+            <option value="adoptive">Adoptif(ve)</option>
+            <option value="step">Beau-parent</option>
+            <option value="guardian">Tuteur/Tutrice</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-ft">
+        <button class="btn-cancel" (click)="filiationModal.set(false)">Annuler</button>
+        <button class="btn-save" (click)="saveFiliation()" [disabled]="saving()">
+          @if (saving()) { <span class="spinner"></span> } @else { Ajouter }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══════════════ MODAL UNION ══════════════ -->
+@if (unionModal()) {
+  <div class="modal-bg" (click)="unionModal.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-hd">
+        <h2>{{ unionEditTarget() ? 'Modifier l\'union' : 'Ajouter une union' }}</h2>
+        <button class="modal-x" (click)="unionModal.set(false)">✕</button>
+      </div>
+      <div class="modal-body" [formGroup]="unionForm">
+        <div class="field">
+          <label>Partenaire *</label>
+          <select formControlName="person_id_2">
+            <option value="">— Sélectionner —</option>
+            @for (p of availablePartners(); track p.id) {
+              <option [value]="p.id">{{ p.first_name }} {{ p.last_name }}</option>
+            }
+          </select>
+        </div>
+        <div class="row-2">
+          <div class="field"><label>Type</label>
+            <select formControlName="union_type"><option value="mariage">Mariage</option><option value="union_libre">Union libre</option><option value="pacs">PACS</option><option value="fiancailles">Fiançailles</option></select>
+          </div>
+          <div class="field"><label>Statut</label>
+            <select formControlName="statut"><option value="actif">Actif</option><option value="dissous">Dissous</option></select>
+          </div>
+        </div>
+        <div class="row-2">
+          <div class="field"><label>Date d'union</label><input formControlName="date_union" placeholder="AAAA-MM-JJ"/></div>
+          <div class="field"><label>Lieu</label><input formControlName="lieu_union" placeholder="Paris, France"/></div>
+        </div>
+        <div class="field"><label>Date de dissolution</label><input formControlName="date_dissolution" placeholder="AAAA-MM-JJ"/></div>
+      </div>
+      <div class="modal-ft">
+        <button class="btn-cancel" (click)="unionModal.set(false)">Annuler</button>
+        <button class="btn-save" (click)="saveUnion()" [disabled]="saving()">
+          @if (saving()) { <span class="spinner"></span> } @else { Enregistrer }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══════════════ MODAL EVENT ══════════════ -->
+@if (eventModal()) {
+  <div class="modal-bg" (click)="eventModal.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-hd">
+        <h2>{{ eventEditTarget() ? 'Modifier l\'événement' : 'Ajouter un événement' }}</h2>
+        <button class="modal-x" (click)="eventModal.set(false)">✕</button>
+      </div>
+      <div class="modal-body" [formGroup]="eventForm">
+        <div class="field"><label>Type *</label>
+          <select formControlName="event_type">
+            <option value="birth">🐣 Naissance</option>
+            <option value="death">✝️ Décès</option>
+            <option value="baptism">✨ Baptême</option>
+            <option value="burial">⚱️ Inhumation</option>
+            <option value="education">🎓 Éducation</option>
+            <option value="employment">💼 Emploi</option>
+            <option value="residence">🏠 Résidence</option>
+            <option value="custom">📅 Événement personnalisé</option>
+          </select>
+        </div>
+        <div class="row-2">
+          <div class="field"><label>Date début</label><input formControlName="date_start" placeholder="AAAA, AAAA-MM ou AAAA-MM-JJ"/></div>
+          <div class="field"><label>Date fin</label><input formControlName="date_end" placeholder="Pour les événements avec durée"/></div>
+        </div>
+        <div class="field"><label>Lieu</label><input formControlName="place" placeholder="Ville, Pays"/></div>
+        <div class="field"><label>Description</label><textarea formControlName="description" rows="3" placeholder="Détails…"></textarea></div>
+      </div>
+      <div class="modal-ft">
+        <button class="btn-cancel" (click)="eventModal.set(false)">Annuler</button>
+        <button class="btn-save" (click)="saveEvent()" [disabled]="saving()">
+          @if (saving()) { <span class="spinner"></span> } @else { Enregistrer }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══════════════ MODAL DELETE ══════════════ -->
+@if (deleteModal()) {
+  <div class="modal-bg" (click)="deleteModal.set(null)">
+    <div class="modal modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-hd"><h2>Confirmer la suppression</h2><button class="modal-x" (click)="deleteModal.set(null)">✕</button></div>
+      <div class="modal-body" style="text-align:center">
+        <p>Supprimer <strong>{{ deleteModal()!.label }}</strong> ?<br>
+          <small style="color:var(--text-muted)">Cette action est irréversible.</small>
+        </p>
+      </div>
+      <div class="modal-ft">
+        <button class="btn-cancel" (click)="deleteModal.set(null)">Annuler</button>
+        <button class="btn-danger" (click)="confirmDelete()" [disabled]="saving()">
+          @if (saving()) { <span class="spinner"></span> } @else { Supprimer }
+        </button>
+      </div>
+    </div>
+  </div>
+}

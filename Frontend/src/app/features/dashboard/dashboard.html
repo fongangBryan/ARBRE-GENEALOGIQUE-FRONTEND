@@ -31,10 +31,12 @@
         Membres
       </a>
 
-      <a routerLink="/media" routerLinkActive="active" class="nav-item">
-        <svg class="ni" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-        Photos & Médias
-      </a>
+      @if (isEditor()) {
+        <a routerLink="/media" routerLinkActive="active" class="nav-item">
+          <svg class="ni" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Photos & Médias
+        </a>
+      }
 
       <p class="nav-section">Compte</p>
 
@@ -88,10 +90,12 @@
             }
           </p>
         </div>
-        <a routerLink="/members/add" class="btn-new-member">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Nouveau membre
-        </a>
+        @if (isEditor()) {
+          <a routerLink="/members" [queryParams]="{create: 'true'}" class="btn-new-member">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nouveau membre
+          </a>
+        }
       </div>
 
       <div class="stats-grid">
@@ -136,6 +140,29 @@
         </div>
       </div>
 
+      <!-- Photos récentes -->
+      @if (isEditor() && (loadingPhotos() || photos().length > 0)) {
+        <div class="panel photos-panel">
+          <div class="panel-head">
+            <h2 class="panel-title">Photos récentes</h2>
+            <a routerLink="/media" class="panel-link">Voir tout →</a>
+          </div>
+          @if (loadingPhotos()) {
+            <div class="photos-grid">
+              @for (i of [1,2,3,4,5,6]; track i) {
+                <div class="sk sk-photo"></div>
+              }
+            </div>
+          } @else {
+            <div class="photos-grid">
+              @for (p of photos(); track p.id) {
+                <img [src]="photoSrc(p)" class="photo-thumb" loading="lazy" alt="photo"/>
+              }
+            </div>
+          }
+        </div>
+      }
+
       <div class="main-grid">
 
         <div class="panel">
@@ -160,7 +187,7 @@
               </div>
               <p class="empty-title">Aucun membre pour l'instant</p>
               <p class="empty-sub">Commencez par ajouter le premier membre de votre famille</p>
-              <a routerLink="/members/add" class="btn-empty">
+              <a routerLink="/members" [queryParams]="{create: 'true'}" class="btn-empty">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Ajouter un membre
               </a>
@@ -173,8 +200,7 @@
                   <div class="person-info">
                     <p class="person-name">{{ p.first_name }} {{ p.last_name }}</p>
                     <p class="person-meta">
-                      @if (p.birth_date) { Né(e) le {{ p.birth_date | date:'d MMM yyyy' : '' : 'fr' }} }
-                      @else { Date de naissance inconnue }
+                      Né(e) le {{ formatBirthDate(p.birth_date) }}
                     </p>
                   </div>
                   <a [routerLink]="['/members', p.id]" class="person-arrow">
@@ -190,21 +216,25 @@
           <div class="panel">
             <div class="panel-head"><h2 class="panel-title">Actions rapides</h2></div>
             <div class="actions-list">
-              <a routerLink="/members/add" class="action-item act-green">
-                <div class="action-icon ai-green"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></div>
-                <div class="action-text"><p class="action-title">Ajouter un membre</p><p class="action-desc">Enrichir votre arbre</p></div>
-                <svg class="action-chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-              </a>
+              @if (isEditor()) {
+                <a routerLink="/members" [queryParams]="{create: 'true'}" class="action-item act-green">
+                  <div class="action-icon ai-green"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></div>
+                  <div class="action-text"><p class="action-title">Ajouter un membre</p><p class="action-desc">Enrichir votre arbre</p></div>
+                  <svg class="action-chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                </a>
+              }
               <a routerLink="/tree" class="action-item act-blue">
                 <div class="action-icon ai-blue"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 2L12 7"/><path d="M12 7C12 7 8 9 6 13H18C16 9 12 7 12 7Z"/><path d="M12 13V22"/><path d="M8 18H16"/></svg></div>
                 <div class="action-text"><p class="action-title">Voir l'arbre</p><p class="action-desc">Visualisation graphique</p></div>
                 <svg class="action-chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
               </a>
-              <a routerLink="/media" class="action-item act-cyan">
-                <div class="action-icon ai-cyan"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
-                <div class="action-text"><p class="action-title">Ajouter des photos</p><p class="action-desc">Albums et médias</p></div>
-                <svg class="action-chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-              </a>
+              @if (isEditor()) {
+                <a routerLink="/media" class="action-item act-cyan">
+                  <div class="action-icon ai-cyan"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+                  <div class="action-text"><p class="action-title">Ajouter des photos</p><p class="action-desc">Albums et médias</p></div>
+                  <svg class="action-chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                </a>
+              }
             </div>
           </div>
 

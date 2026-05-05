@@ -3,7 +3,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { AuthService } from '../../../services/auth.service';
-import { AdminService } from '../../../services/admin.service';
+import { AdminService, AuditLogEntry } from '../../../services/admin.service';
 import { User, UserRole } from '../../../models/user.model';
 
 @Component({
@@ -37,6 +37,19 @@ export class AdminDashboardComponent implements OnInit {
   editActive   = signal(true);
 
   deleteTarget = signal<User | null>(null);
+
+  linkModal = signal<{ type: 'verify' | 'reset'; link: string; info: string } | null>(null);
+  linkCopied = signal(false);
+
+  activeTab = signal<'users' | 'logs'>('users');
+
+  logs           = signal<AuditLogEntry[]>([]);
+  logsTotal      = signal(0);
+  logsPage       = signal(1);
+  logsPages      = signal(1);
+  logsLoading    = signal(false);
+  logsAction     = signal('');
+  logsDebounce: ReturnType<typeof setTimeout> | null = null;
 
   stats = computed(() => {
     const all = this.users();
@@ -164,6 +177,39 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
+  openVerificationLink(user: User) {
+    this.admin.getVerificationLink(user.id).subscribe({
+      next: res => this.linkModal.set({
+        type: 'verify',
+        link: res.link,
+        info: `Valable ${res.expires_hours}h — pour ${user.email}`,
+      }),
+      error: err => this.error.set(err.error?.detail ?? 'Erreur lors de la génération du lien.'),
+    });
+  }
+
+  openResetLink(user: User) {
+    this.admin.getResetLink(user.id).subscribe({
+      next: res => this.linkModal.set({
+        type: 'reset',
+        link: res.link,
+        info: `Valable ${res.expires_minutes} min — pour ${user.email}`,
+      }),
+      error: err => this.error.set(err.error?.detail ?? 'Erreur lors de la génération du lien.'),
+    });
+  }
+
+  closeLinkModal() { this.linkModal.set(null); this.linkCopied.set(false); }
+
+  copyLink() {
+    const link = this.linkModal()?.link;
+    if (!link) return;
+    navigator.clipboard.writeText(link).then(() => {
+      this.linkCopied.set(true);
+      setTimeout(() => this.linkCopied.set(false), 2500);
+    });
+  }
+
   private flash(msg: string) {
     this.successMsg.set(msg);
     setTimeout(() => this.successMsg.set(null), 3500);
@@ -171,6 +217,64 @@ export class AdminDashboardComponent implements OnInit {
 
   prevPage() { if (this.currentPage() > 1) this.loadUsers(this.currentPage() - 1); }
   nextPage() { if (this.currentPage() < this.totalPages()) this.loadUsers(this.currentPage() + 1); }
+
+  switchTab(tab: 'users' | 'logs') {
+    this.activeTab.set(tab);
+    if (tab === 'logs' && this.logs().length === 0) this.loadLogs(1);
+  }
+
+  loadLogs(page = 1) {
+    this.logsLoading.set(true);
+    const action = this.logsAction().trim() || undefined;
+    this.admin.getAuditLogs(page, 50, undefined, action).subscribe({
+      next: res => {
+        this.logs.set(res.items);
+        this.logsTotal.set(res.total);
+        this.logsPage.set(page);
+        this.logsPages.set(res.pages);
+        this.logsLoading.set(false);
+      },
+      error: () => this.logsLoading.set(false),
+    });
+  }
+
+  onLogsActionFilter() {
+    if (this.logsDebounce) clearTimeout(this.logsDebounce);
+    this.logsDebounce = setTimeout(() => this.loadLogs(1), 350);
+  }
+
+  logsPrevPage() { if (this.logsPage() > 1) this.loadLogs(this.logsPage() - 1); }
+  logsNextPage() { if (this.logsPage() < this.logsPages()) this.loadLogs(this.logsPage() + 1); }
+
+  logPageRange(): number[] {
+    const total = this.logsPages(), cur = this.logsPage(), d = 2;
+    const r: number[] = [];
+    for (let i = Math.max(1, cur - d); i <= Math.min(total, cur + d); i++) r.push(i);
+    return r;
+  }
+
+  actionLabel(action: string): string {
+    const labels: Record<string, string> = {
+      login: 'Connexion', register: 'Inscription',
+      email_verified: 'Email vérifié', password_reset: 'Réinit. MDP',
+    };
+    return labels[action] ?? action;
+  }
+
+  actionClass(action: string): string {
+    if (action === 'login') return 'log-login';
+    if (action === 'register') return 'log-register';
+    if (action === 'password_reset') return 'log-danger';
+    if (action === 'email_verified') return 'log-success';
+    return 'log-default';
+  }
+
+  userDisplayName(entry: AuditLogEntry): string {
+    if (!entry.user) return '—';
+    const { first_name, last_name, email } = entry.user;
+    if (first_name || last_name) return `${first_name ?? ''} ${last_name ?? ''}`.trim();
+    return email;
+  }
 
   logout() { this.auth.logout(); }
   toggleSidebar() { this.sidebarOpen.update(v => !v); }

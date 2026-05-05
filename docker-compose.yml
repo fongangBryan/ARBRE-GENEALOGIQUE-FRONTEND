@@ -21,7 +21,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5433:5432"   # 5432 déjà utilisé sur l'hôte → accès via localhost:5433
+      - "5540:5432"   # 5432 et 5433-5532 indisponibles sur l'hôte → accès via localhost:5540
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -40,7 +40,7 @@ services:
       PGADMIN_DEFAULT_PASSWORD: Admin123!
       PGADMIN_CONFIG_SERVER_MODE: "False"
     ports:
-      - "5200:80"
+      - "5380:80"   # 5200 dans plage exclue par Windows (5141-5240)
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
@@ -71,7 +71,7 @@ services:
       - ./Backend:/app          # hot-reload en dev
       - /app/__pycache__        # exclut le cache du montage
     ports:
-      - "8080:8000"   # 8000 bloqué par Windows (plage réservée 7959-8058) → accès via localhost:8080
+      - "8090:8000"   # 8000 bloqué, 8080 pris par un service système → accès via localhost:8090
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - genealogie-net

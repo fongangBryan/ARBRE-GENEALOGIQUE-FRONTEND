@@ -1,0 +1,203 @@
+<app-shell pageTitle="Membres" pageSubtitle="Gérez les personnes de votre arbre">
+
+  @if (success()) {
+    <div class="alert-success"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>{{ success() }}</div>
+  }
+  @if (error()) {
+    <div class="alert-error"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>{{ error() }}</div>
+  }
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg class="si" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search-input" type="text" placeholder="Rechercher un membre…"
+        [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event); onSearch()"/>
+    </div>
+    @if (isEditor()) {
+      <button class="btn-add" (click)="openCreate()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Ajouter un membre
+      </button>
+    }
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    @if (loading()) {
+      <div class="sk-list">
+        @for (i of [1,2,3,4,5,6]; track i) {
+          <div class="sk-row">
+            <div class="sk sk-av"></div>
+            <div class="sk-lines"><div class="sk sk-lg"></div><div class="sk sk-sm"></div></div>
+            <div class="sk sk-badge"></div><div class="sk sk-badge"></div>
+          </div>
+        }
+      </div>
+    } @else if (persons().length === 0) {
+      <div class="empty">
+        <div class="empty-icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#02E08E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <p class="empty-title">Aucun membre trouvé</p>
+        @if (isEditor()) {
+          <button class="btn-add" style="margin-top:8px" (click)="openCreate()">Ajouter le premier membre</button>
+        }
+      </div>
+    } @else {
+      <table class="persons-table">
+        <thead>
+          <tr>
+            <th>Personne</th>
+            <th>Genre</th>
+            <th>Naissance</th>
+            <th>Décès</th>
+            <th>Statut</th>
+            <th class="th-r">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of persons(); track p.id) {
+            <tr>
+              <td>
+                <div class="person-cell">
+                  <div class="p-avatar" [class.deceased]="!p.is_living">{{ initials(p) }}</div>
+                  <div>
+                    <p class="p-name">{{ p.first_name }} {{ p.last_name }}
+                      @if (p.maiden_name) { <span class="maiden">née {{ p.maiden_name }}</span> }
+                    </p>
+                    @if (p.occupation) { <p class="p-sub">{{ p.occupation }}</p> }
+                  </div>
+                </div>
+              </td>
+              <td class="td-center">{{ genderIcon(p.gender) }}</td>
+              <td>
+                @if (p.birth_date) { <span class="date-pill">{{ p.birth_date }}</span> }
+                @if (p.birth_place) { <span class="place-text">{{ p.birth_place }}</span> }
+              </td>
+              <td>
+                @if (p.death_date) { <span class="date-pill death">{{ p.death_date }}</span> }
+                @if (p.death_place) { <span class="place-text">{{ p.death_place }}</span> }
+              </td>
+              <td>
+                <span class="status-badge" [class.alive]="p.is_living">{{ p.is_living ? 'Vivant(e)' : 'Décédé(e)' }}</span>
+              </td>
+              <td>
+                <div class="act-btns">
+                  <a class="btn-view" [routerLink]="['/members', p.id]" title="Voir la fiche">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </a>
+                  @if (isEditor()) {
+                    <button class="btn-edit" (click)="openEdit(p)" title="Modifier">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button class="btn-del" (click)="openDelete(p)" title="Supprimer">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button class="pg-btn" (click)="prevPage()" [disabled]="page() === 1">‹</button>
+          @for (p of pages(); track p) {
+            <button class="pg-btn" [class.active]="p === page()" (click)="load(p)">{{ p }}</button>
+          }
+          <button class="pg-btn" (click)="nextPage()" [disabled]="page() === totalPages()">›</button>
+          <span class="pg-info">{{ total() }} membre{{ total() !== 1 ? 's' : '' }}</span>
+        </div>
+      }
+    }
+  </div>
+
+</app-shell>
+
+<!-- ══════ MODAL CREATE/EDIT ══════ -->
+@if (modalMode()) {
+  <div class="modal-bg" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-hd">
+        <h2>{{ modalMode() === 'create' ? 'Ajouter un membre' : 'Modifier le membre' }}</h2>
+        <button class="modal-x" (click)="closeModal()">✕</button>
+      </div>
+      <div class="modal-body" [formGroup]="form">
+        <div class="row-2">
+          <div class="field"><label>Prénom *</label><input formControlName="first_name" placeholder="Jean"/></div>
+          <div class="field"><label>Nom *</label><input formControlName="last_name" placeholder="Dupont"/></div>
+        </div>
+        <div class="row-2">
+          <div class="field"><label>Nom de naissance</label><input formControlName="maiden_name" placeholder="Facultatif"/></div>
+          <div class="field"><label>Genre</label>
+            <select formControlName="gender">
+              <option value="">— Non renseigné —</option>
+              <option value="male">Homme</option>
+              <option value="female">Femme</option>
+              <option value="other">Autre</option>
+            </select>
+          </div>
+        </div>
+        <div class="row-2">
+          <div class="field"><label>Date de naissance</label><input formControlName="birth_date" placeholder="AAAA-MM-JJ"/></div>
+          <div class="field"><label>Lieu de naissance</label><input formControlName="birth_place" placeholder="Paris, France"/></div>
+        </div>
+        <div class="row-2">
+          <div class="field"><label>Date de décès</label><input formControlName="death_date" placeholder="AAAA-MM-JJ"/></div>
+          <div class="field"><label>Lieu de décès</label><input formControlName="death_place" placeholder="Facultatif"/></div>
+        </div>
+        <div class="row-2">
+          <div class="field"><label>Profession</label><input formControlName="occupation" placeholder="Médecin, ingénieur…"/></div>
+          <div class="field"><label>Nationalité</label><input formControlName="nationality" placeholder="Française"/></div>
+        </div>
+        <div class="field">
+          <label>Biographie</label>
+          <textarea formControlName="biography" rows="3" placeholder="Courte biographie…"></textarea>
+        </div>
+        <div class="row-2">
+          <div class="field"><label>Confidentialité</label>
+            <select formControlName="privacy_level">
+              <option value="public">Public</option>
+              <option value="family">Famille</option>
+              <option value="private">Privé</option>
+            </select>
+          </div>
+          <div class="field field-toggle">
+            <label>Encore en vie</label>
+            <label class="toggle">
+              <input type="checkbox" formControlName="is_living"/>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-ft">
+        <button class="btn-cancel" (click)="closeModal()">Annuler</button>
+        <button class="btn-save" (click)="saveForm()" [disabled]="saving()">
+          @if (saving()) { <span class="spinner"></span> } @else { Enregistrer }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══════ MODAL DELETE ══════ -->
+@if (deleteTarget()) {
+  <div class="modal-bg" (click)="closeDelete()">
+    <div class="modal modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-hd"><h2>Supprimer le membre</h2><button class="modal-x" (click)="closeDelete()">✕</button></div>
+      <div class="modal-body" style="text-align:center;gap:12px">
+        <p>Voulez-vous supprimer <strong>{{ deleteTarget()!.first_name }} {{ deleteTarget()!.last_name }}</strong> ?<br>Cette action est irréversible.</p>
+      </div>
+      <div class="modal-ft">
+        <button class="btn-cancel" (click)="closeDelete()">Annuler</button>
+        <button class="btn-danger" (click)="confirmDelete()" [disabled]="saving()">
+          @if (saving()) { <span class="spinner"></span> } @else { Supprimer }
+        </button>
+      </div>
+    </div>
+  </div>
+}

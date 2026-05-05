@@ -20,7 +20,7 @@ router = APIRouter(prefix="/persons", tags=["Persons"])
 def list_persons(
     search: Optional[str] = Query(None, min_length=1),
     page: int  = Query(1,  ge=1),
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=500),
     current_user = Depends(get_current_user),
     db: Session  = Depends(get_db),
 ):

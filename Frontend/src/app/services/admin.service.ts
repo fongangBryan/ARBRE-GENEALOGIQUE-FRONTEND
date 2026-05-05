@@ -1,8 +1,8 @@
-import { Injectable, inject } from '@angular/core';
+﻿import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { User, UserListResponse, UserRole } from '../models/user.model';
 
-const API = 'http://localhost:8080/api/v1';
+const API = 'http://localhost:8090/api/v1';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
@@ -39,4 +39,40 @@ export class AdminService {
   deleteUser(id: string) {
     return this.http.delete<void>(`${API}/admin/users/${id}`);
   }
+
+  getVerificationLink(id: string) {
+    return this.http.post<{ link: string; expires_hours: number }>(`${API}/admin/users/${id}/verification-link`, {});
+  }
+
+  getResetLink(id: string) {
+    return this.http.post<{ link: string; expires_minutes: number }>(`${API}/admin/users/${id}/reset-link`, {});
+  }
+
+  getAuditLogs(page = 1, limit = 50, userId?: string, action?: string) {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+    if (userId) params = params.set('user_id', userId);
+    if (action) params = params.set('action', action);
+    return this.http.get<AuditLogResponse>(`${API}/admin/logs`, { params });
+  }
 }
+
+export interface AuditLogEntry {
+  id: string;
+  action: string;
+  resource_type: string | null;
+  resource_id: string | null;
+  detail: string | null;
+  ip_address: string | null;
+  created_at: string;
+  user: { email: string; first_name: string | null; last_name: string | null } | null;
+}
+
+export interface AuditLogResponse {
+  items: AuditLogEntry[];
+  total: number;
+  page: number;
+  pages: number;
+}
+

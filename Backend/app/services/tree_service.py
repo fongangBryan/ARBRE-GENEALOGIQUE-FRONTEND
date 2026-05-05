@@ -31,6 +31,7 @@ class TreeService:
             "first_name": person.first_name,
             "last_name": person.last_name,
             "birth_date": person.birth_date,
+            "gender": person.gender.value if person.gender else None,
             "is_living": person.is_living,
         }
 

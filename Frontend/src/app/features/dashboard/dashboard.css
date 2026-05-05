@@ -123,3 +123,10 @@
 @media (max-width: 1024px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .main-grid { grid-template-columns: 1fr; } }
 @media (max-width: 768px) { .sidebar { transform: translateX(-100%); } .layout.mob-open .sidebar { transform: translateX(0); } .layout.mob-open .overlay { display: block; } .main { margin-left: 0; } .menu-toggle { display: flex; } .topbar-sub { display: none; } .content { padding: 16px; gap: 16px; } }
 @media (max-width: 540px) { .stats-grid { grid-template-columns: 1fr 1fr; } .welcome-row { flex-direction: column; align-items: flex-start; } .topbar { padding: 0 16px; } .stat-value { font-size: 24px; } }
+
+/* Recent photos */
+.photos-panel { margin-bottom: 4px; }
+.photos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; padding: 16px 20px; }
+.photo-thumb { width: 100%%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; cursor: pointer; transition: opacity .15s; }
+.photo-thumb:hover { opacity: .85; }
+.sk-photo { aspect-ratio: 1; border-radius: 10px; background: #f0f0f0; animation: pulse 1.5s ease-in-out infinite; }

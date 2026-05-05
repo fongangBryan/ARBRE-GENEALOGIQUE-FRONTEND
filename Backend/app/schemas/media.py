@@ -41,6 +41,7 @@ class MediaUploadResponse(BaseModel):
     thumbnail_key: Optional[str] = None
     url: str
     thumbnail_url: Optional[str] = None
+    mime_type: Optional[str] = None
 
 class MediaListResponse(BaseModel):
     items: List[MediaResponse]

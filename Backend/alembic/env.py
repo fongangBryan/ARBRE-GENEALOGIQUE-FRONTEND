@@ -21,6 +21,7 @@ from app.models.event import Event
 from app.models.media import Media
 from app.models.access_control import AccessControl
 from app.models.tag import Tag
+from app.models.audit_log import AuditLog
 
 # Config Alembic
 config = context.config

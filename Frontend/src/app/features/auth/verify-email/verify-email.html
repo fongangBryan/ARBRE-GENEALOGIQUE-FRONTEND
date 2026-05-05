@@ -1,0 +1,37 @@
+<div class="page">
+  <div class="blob blob-tl"></div>
+  <div class="blob blob-br"></div>
+
+  <div class="card">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L12 7"/><path d="M12 7C12 7 8 9 6 13H18C16 9 12 7 12 7Z"/>
+          <path d="M12 13V22"/><path d="M8 18H16"/>
+        </svg>
+      </div>
+      <span class="logo-name">GénéaTree</span>
+    </div>
+
+    @if (status() === 'loading') {
+      <div class="status-box">
+        <div class="spinner"></div>
+        <p>Vérification en cours…</p>
+      </div>
+    } @else if (status() === 'success') {
+      <div class="status-box success">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+        <h2>Email vérifié !</h2>
+        <p>Votre adresse email a été confirmée. Vous pouvez maintenant vous connecter.</p>
+        <a class="btn-primary" routerLink="/login">Se connecter</a>
+      </div>
+    } @else {
+      <div class="status-box error">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <h2>Échec de la vérification</h2>
+        <p>{{ error() }}</p>
+        <a class="btn-secondary" routerLink="/login">Retour à la connexion</a>
+      </div>
+    }
+  </div>
+</div>

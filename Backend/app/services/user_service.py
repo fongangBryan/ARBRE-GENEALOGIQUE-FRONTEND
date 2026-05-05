@@ -1,8 +1,10 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import desc
 from typing import Optional, List, Tuple
 from uuid import UUID
 
 from app.models.user import User, UserRole
+from app.models.audit_log import AuditLog
 from app.schemas.user import UserUpdate
 from app.core.security import get_password_hash
 from app.repositories.user_repository import UserRepository
@@ -104,7 +106,22 @@ class UserService:
         return self.repo.list_all(search, page, limit)
     
     def get_user_activity(self, user_id: UUID) -> List[dict]:
-        """Récupérer l'activité d'un utilisateur (créations, modifications)"""
-        # À implémenter avec un modèle d'audit
-        # Retourne une liste d'actions récentes
-        return []
+        """Récupérer l'activité d'un utilisateur depuis audit_logs."""
+        logs = (
+            self.db.query(AuditLog)
+            .filter(AuditLog.user_id == user_id)
+            .order_by(desc(AuditLog.created_at))
+            .limit(50)
+            .all()
+        )
+        return [
+            {
+                "id": str(log.id),
+                "action": log.action,
+                "resource_type": log.resource_type,
+                "resource_id": log.resource_id,
+                "detail": log.detail,
+                "created_at": log.created_at.isoformat() if log.created_at else None,
+            }
+            for log in logs
+        ]

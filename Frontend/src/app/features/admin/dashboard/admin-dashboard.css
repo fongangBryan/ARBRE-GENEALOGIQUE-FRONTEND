@@ -172,6 +172,53 @@
 .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ── Vérification badges ── */
+.verif-pill { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11.5px; font-weight: 600; }
+.verif-ok { background: #f0fdf4; color: #16a34a; }
+.verif-no { background: #fef2f2; color: #dc2626; }
+
+/* ── Boutons lien ── */
+.btn-link-verify { width: 30px; height: 30px; border-radius: 8px; background: rgba(2,224,142,.1); border: none; color: #059669; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .15s; }
+.btn-link-verify:hover { background: rgba(2,224,142,.2); }
+.btn-link-reset  { width: 30px; height: 30px; border-radius: 8px; background: rgba(245,158,11,.1); border: none; color: #d97706; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .15s; }
+.btn-link-reset:hover { background: rgba(245,158,11,.2); }
+
+/* ── Modal lien ── */
+.modal-link { max-width: 560px; }
+.modal-header { display: flex; align-items: flex-start; gap: 14px; }
+.modal-header-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.icon-verify { background: rgba(2,224,142,.12); color: #059669; }
+.icon-reset  { background: rgba(245,158,11,.12); color: #d97706; }
+.modal-header > div:nth-child(2) { flex: 1; }
+.modal-header h2 { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.modal-link-info { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+.link-hint { font-size: 13.5px; color: var(--text-secondary); line-height: 1.55; }
+.link-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; word-break: break-all; font-size: 12px; font-family: monospace; color: #025BE0; line-height: 1.55; }
+.link-text { }
+.link-actions { display: flex; gap: 10px; }
+.btn-copy { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 10px; border: 1.5px solid var(--primary); background: #fff; color: var(--primary); font-size: 13.5px; font-weight: 600; cursor: pointer; transition: background .15s, color .15s; }
+.btn-copy:hover { background: #f0fdf4; }
+.btn-copied { background: #f0fdf4; color: #16a34a; border-color: #86efac; }
+.btn-open { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 10px; background: linear-gradient(135deg, #02E08E, #025BE0); color: #fff; font-size: 13.5px; font-weight: 600; text-decoration: none; transition: opacity .15s; }
+.btn-open:hover { opacity: .88; }
+
+/* ── Tabs ── */
+.tabs-row { display: flex; gap: 4px; background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 6px; width: fit-content; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+.tab-btn { display: flex; align-items: center; gap: 7px; padding: 8px 18px; border-radius: 10px; border: none; background: transparent; color: var(--text-secondary); font-size: 13.5px; font-weight: 600; cursor: pointer; transition: background .15s, color .15s; }
+.tab-btn:hover { background: var(--bg-gray); color: var(--text-primary); }
+.tab-btn.tab-active { background: linear-gradient(135deg, #02E08E18, #025BE012); color: #025BE0; }
+.tab-count { background: #025BE0; color: #fff; font-size: 10px; font-weight: 700; border-radius: 20px; padding: 1px 7px; min-width: 20px; text-align: center; }
+
+/* ── Log badges ── */
+.log-badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 700; }
+.log-login    { background: rgba(2,91,224,.1);  color: #025BE0; }
+.log-register { background: rgba(2,224,142,.1); color: #059669; }
+.log-danger   { background: rgba(239,68,68,.1); color: #dc2626; }
+.log-success  { background: rgba(22,163,74,.1); color: #16a34a; }
+.log-default  { background: #f1f5f9; color: #64748b; }
+.log-res-id   { font-size: 11px; color: var(--text-muted); font-family: monospace; }
+
 @media (max-width: 1200px) { .stats-row { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 900px)  { .stats-row { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 768px) {
