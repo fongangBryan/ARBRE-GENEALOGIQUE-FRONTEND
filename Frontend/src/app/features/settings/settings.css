@@ -40,6 +40,7 @@
 /* 2FA */
 .twofa-desc { font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; }
 .twofa-active { display: flex; align-items: center; gap: 8px; color: #166534; }
+.twofa-check-icon { font-size: 18px; vertical-align: -4px; color: #16a34a; }
 .btn-2fa { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: rgba(245,158,11,.1); color: #d97706; border: 1.5px solid rgba(245,158,11,.35); border-radius: 10px; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: background .15s; }
 .btn-2fa:hover:not(:disabled) { background: rgba(245,158,11,.18); }
 .btn-2fa:disabled { opacity: .5; cursor: not-allowed; }

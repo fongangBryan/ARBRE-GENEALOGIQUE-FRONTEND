@@ -180,8 +180,8 @@ export class PersonDetailComponent implements OnInit {
     return m[t] ?? t;
   }
   eventIcon(t: string) {
-    const m: Record<string, string> = { birth: '🐣', death: '✝️', baptism: '✨', burial: '⚱️', education: '🎓', employment: '💼', residence: '🏠', custom: '📅' };
-    return m[t] ?? '📅';
+    const m: Record<string, string> = { birth: 'child_care', death: 'candle', baptism: 'water_drop', burial: 'yard', education: 'school', employment: 'work', residence: 'home', custom: 'event' };
+    return m[t] ?? 'event';
   }
   private readonly API_BASE = 'http://localhost:8090';
   getMediaSrc(m: Media): string {

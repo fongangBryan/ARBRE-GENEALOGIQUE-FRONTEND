@@ -1,38 +1,40 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --primary:        #02E08E;
-  --primary-dark:   #00C478;
-  --primary-light:  #E8FDF8;
-  --primary-bg:     #F0FDF9;
+  --primary:        #059669;
+  --primary-dark:   #047857;
+  --primary-light:  #ECFDF5;
+  --primary-bg:     #F0FDF4;
 
-  --blue:           #02A1E0;
-  --cyan:           #02E0D9;
-  --green-bright:   #02E042;
-  --navy:           #025BE0;
-  --teal-light:     #92E0DD;
+  --blue:           #2563EB;
+  --navy:           #1D4ED8;
+  --indigo:         #4F46E5;
+  --teal:           #0D9488;
 
-  --text-primary:   #111827;
-  --text-secondary: #6B7280;
-  --text-muted:     #9CA3AF;
+  --text-primary:   #0F172A;
+  --text-secondary: #475569;
+  --text-muted:     #94A3B8;
 
-  --border:         #E5E7EB;
-  --border-focus:   #02E08E;
+  --border:         #E2E8F0;
+  --border-focus:   #059669;
 
   --bg-white:       #FFFFFF;
-  --bg-gray:        #F9FAFB;
+  --bg-gray:        #F8FAFC;
 
-  --error:          #EF4444;
+  --error:          #DC2626;
   --error-bg:       #FEF2F2;
+
+  --success:        #059669;
+  --success-bg:     #ECFDF5;
 
   --radius-sm:  6px;
   --radius-md:  10px;
-  --radius-lg:  16px;
-  --radius-xl:  24px;
+  --radius-lg:  14px;
+  --radius-xl:  20px;
 
-  --shadow-sm:  0 1px 3px rgba(0,0,0,.08);
-  --shadow-md:  0 4px 16px rgba(0,0,0,.10);
-  --shadow-lg:  0 8px 32px rgba(0,0,0,.12);
+  --shadow-sm:  0 1px 3px rgba(0,0,0,.06);
+  --shadow-md:  0 4px 16px rgba(0,0,0,.08);
+  --shadow-lg:  0 8px 32px rgba(0,0,0,.10);
 }
 
 html, body { height: 100%; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg-gray); color: var(--text-primary); -webkit-font-smoothing: antialiased; }
@@ -43,6 +45,14 @@ a:hover { text-decoration: underline; }
 button { cursor: pointer; font-family: inherit; }
 
 input, button, select, textarea { font-family: inherit; }
+
+.material-symbols-rounded {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+  font-size: 16px;
+  line-height: 1;
+  vertical-align: -3px;
+  flex-shrink: 0;
+}
 
 /* ── Buttons ──────────────────────────────────────────────────── */
 .btn-primary {
@@ -97,6 +107,14 @@ input, button, select, textarea { font-family: inherit; }
 /* ── Divider ──────────────────────────────────────────────────── */
 .divider { display: flex; align-items: center; gap: 12px; color: var(--text-muted); font-size: 13px; }
 .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* ── Alert success ────────────────────────────────────────────── */
+.alert-success {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; border-radius: var(--radius-md);
+  background: var(--success-bg); border: 1px solid #A7F3D0;
+  font-size: 13.5px; color: #065F46;
+}
 
 /* ── Logo ─────────────────────────────────────────────────────── */
 .logo { display: flex; align-items: center; gap: 10px; }

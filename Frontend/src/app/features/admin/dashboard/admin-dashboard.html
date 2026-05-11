@@ -6,9 +6,21 @@
   <aside class="sidebar">
     <div class="sidebar-logo">
       <div class="s-logo-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L12 7"/><path d="M12 7C12 7 8 9 6 13H18C16 9 12 7 12 7Z"/><path d="M12 13V22"/><path d="M8 18H16"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="4.5" r="1.8" fill="#fff"/>
+          <line x1="12" y1="6.3" x2="12" y2="9"/>
+          <line x1="7" y1="9" x2="17" y2="9"/>
+          <line x1="7" y1="9" x2="7" y2="12"/>
+          <line x1="17" y1="9" x2="17" y2="12"/>
+          <circle cx="7" cy="13.5" r="1.5" fill="#fff"/>
+          <circle cx="17" cy="13.5" r="1.5" fill="#fff"/>
+          <line x1="7" y1="15" x2="4" y2="18.5"/>
+          <line x1="7" y1="15" x2="10" y2="18.5"/>
+          <line x1="17" y1="15" x2="14" y2="18.5"/>
+          <line x1="17" y1="15" x2="20" y2="18.5"/>
+        </svg>
       </div>
-      <span class="s-logo-name">GénéaTree</span>
+      <span class="s-logo-name">GeneaTree</span>
     </div>
 
     <nav class="sidebar-nav">
@@ -187,12 +199,20 @@
                   </td>
                   <td>
                     <span class="tfa-badge" [class.tfa-on]="user.is_2fa_enabled">
-                      {{ user.is_2fa_enabled ? '✓ Activée' : 'Désactivée' }}
+                      @if (user.is_2fa_enabled) {
+                        <span class="material-symbols-rounded">verified_user</span> Activée
+                      } @else {
+                        <span class="material-symbols-rounded tfa-off-icon">shield</span> Désactivée
+                      }
                     </span>
                   </td>
                   <td>
                     <span class="verif-pill" [class.verif-ok]="user.is_verified" [class.verif-no]="!user.is_verified">
-                      {{ user.is_verified ? '✓ Vérifié' : '✗ Non vérifié' }}
+                      @if (user.is_verified) {
+                        <span class="material-symbols-rounded">check_circle</span> Vérifié
+                      } @else {
+                        <span class="material-symbols-rounded">cancel</span> Non vérifié
+                      }
                     </span>
                   </td>
                   <td class="td-date">{{ user.created_at | date:'dd/MM/yyyy' }}</td>

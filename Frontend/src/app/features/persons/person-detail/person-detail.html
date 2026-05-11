@@ -124,7 +124,7 @@
               <span class="tag-badge" [style.background]="tag.color + '22'" [style.border-color]="tag.color" [style.color]="tag.color">
                 {{ tag.label }}
                 @if (isEditor()) {
-                  <button class="tag-remove" (click)="removeTag(tag)" title="Retirer">✕</button>
+                  <button class="tag-remove" (click)="removeTag(tag)" title="Retirer"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                 }
               </span>
             }
@@ -218,7 +218,7 @@
           <div class="rel-list">
             @for (u of unions(); track u.id) {
               <div class="rel-item">
-                <div class="rel-avatar union-av">♥</div>
+                <div class="rel-avatar union-av"><span class="material-symbols-rounded">favorite</span></div>
                 <div class="rel-info">
                   <span class="rel-name">{{ partnerOf(u) }}</span>
                   <span class="rel-type">{{ unionTypeLabel(u.union_type) }}
@@ -273,7 +273,7 @@
                 }
                 <p class="media-name">{{ fileName(m) }}</p>
                 @if (isEditor()) {
-                  <button class="media-del-btn" (click)="openDelete('media', m.id, fileName(m))">✕</button>
+                  <button class="media-del-btn" (click)="openDelete('media', m.id, fileName(m))"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                 }
               </div>
             }
@@ -300,7 +300,7 @@
           <div class="timeline">
             @for (e of events(); track e.id) {
               <div class="tl-item">
-                <div class="tl-dot">{{ eventIcon(e.event_type) }}</div>
+                <div class="tl-dot"><span class="material-symbols-rounded">{{ eventIcon(e.event_type) }}</span></div>
                 <div class="tl-line"></div>
                 <div class="tl-content">
                   <div class="tl-hd">
@@ -321,7 +321,7 @@
                       </div>
                     }
                   </div>
-                  @if (e.place)       { <p class="tl-place">📍 {{ e.place }}</p> }
+                  @if (e.place)       { <p class="tl-place"><span class="material-symbols-rounded">location_on</span> {{ e.place }}</p> }
                   @if (e.description) { <p class="tl-desc">{{ e.description }}</p> }
                 </div>
               </div>
@@ -341,7 +341,7 @@
     <div class="modal modal-sm" (click)="$event.stopPropagation()">
       <div class="modal-hd">
         <h2>Ajouter un tag</h2>
-        <button class="modal-x" (click)="closeTagPicker()">✕</button>
+        <button class="modal-x" (click)="closeTagPicker()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <div class="modal-body" style="gap:16px">
         <!-- Existing tags to assign -->
@@ -385,7 +385,7 @@
 @if (editModal()) {
   <div class="modal-bg" (click)="editModal.set(false)">
     <div class="modal modal-lg" (click)="$event.stopPropagation()">
-      <div class="modal-hd"><h2>Modifier le profil</h2><button class="modal-x" (click)="editModal.set(false)">✕</button></div>
+      <div class="modal-hd"><h2>Modifier le profil</h2><button class="modal-x" (click)="editModal.set(false)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
       <div class="modal-body" [formGroup]="editForm">
         <div class="row-2">
           <div class="field"><label>Prénom *</label><input formControlName="first_name"/></div>
@@ -436,7 +436,7 @@
     <div class="modal modal-sm" (click)="$event.stopPropagation()">
       <div class="modal-hd">
         <h2>{{ filiationRole() === 'parent' ? 'Ajouter un parent' : 'Ajouter un enfant' }}</h2>
-        <button class="modal-x" (click)="filiationModal.set(false)">✕</button>
+        <button class="modal-x" (click)="filiationModal.set(false)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <div class="modal-body" [formGroup]="filiationForm">
         <div class="field">
@@ -474,7 +474,7 @@
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal-hd">
         <h2>{{ unionEditTarget() ? 'Modifier l\'union' : 'Ajouter une union' }}</h2>
-        <button class="modal-x" (click)="unionModal.set(false)">✕</button>
+        <button class="modal-x" (click)="unionModal.set(false)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <div class="modal-body" [formGroup]="unionForm">
         <div class="field">
@@ -516,19 +516,19 @@
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal-hd">
         <h2>{{ eventEditTarget() ? 'Modifier l\'événement' : 'Ajouter un événement' }}</h2>
-        <button class="modal-x" (click)="eventModal.set(false)">✕</button>
+        <button class="modal-x" (click)="eventModal.set(false)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <div class="modal-body" [formGroup]="eventForm">
         <div class="field"><label>Type *</label>
           <select formControlName="event_type">
-            <option value="birth">🐣 Naissance</option>
-            <option value="death">✝️ Décès</option>
-            <option value="baptism">✨ Baptême</option>
-            <option value="burial">⚱️ Inhumation</option>
-            <option value="education">🎓 Éducation</option>
-            <option value="employment">💼 Emploi</option>
-            <option value="residence">🏠 Résidence</option>
-            <option value="custom">📅 Événement personnalisé</option>
+            <option value="birth">Naissance</option>
+            <option value="death">Décès</option>
+            <option value="baptism">Baptême</option>
+            <option value="burial">Inhumation</option>
+            <option value="education">Éducation</option>
+            <option value="employment">Emploi</option>
+            <option value="residence">Résidence</option>
+            <option value="custom">Événement personnalisé</option>
           </select>
         </div>
         <div class="row-2">
@@ -552,7 +552,7 @@
 @if (deleteModal()) {
   <div class="modal-bg" (click)="deleteModal.set(null)">
     <div class="modal modal-sm" (click)="$event.stopPropagation()">
-      <div class="modal-hd"><h2>Confirmer la suppression</h2><button class="modal-x" (click)="deleteModal.set(null)">✕</button></div>
+      <div class="modal-hd"><h2>Confirmer la suppression</h2><button class="modal-x" (click)="deleteModal.set(null)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
       <div class="modal-body" style="text-align:center">
         <p>Supprimer <strong>{{ deleteModal()!.label }}</strong> ?<br>
           <small style="color:var(--text-muted)">Cette action est irréversible.</small>
