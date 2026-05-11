@@ -1,0 +1,46 @@
+.page {
+  min-height: 100vh;
+  background: #F8FAFC;
+  background-image:
+    radial-gradient(at 15% 40%, rgba(5,150,105,.07) 0px, transparent 55%),
+    radial-gradient(at 85% 20%, rgba(29,78,216,.05) 0px, transparent 50%);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 18px; padding: 44px 48px; width: 100%; max-width: 420px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 8px 40px rgba(0,0,0,.08);
+  border: 1px solid #F1F5F9;
+  display: flex; flex-direction: column; gap: 20px; align-items: center;
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon {
+  width: 42px; height: 42px; border-radius: 11px; background: var(--primary);
+  display: flex; align-items: center; justify-content: center;
+}
+.logo-name { font-size: 22px; font-weight: 700; color: var(--text-primary); letter-spacing: -.4px; }
+
+.status-box { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; width: 100%; }
+.status-box h2 { font-size: 20px; font-weight: 700; }
+.status-box p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+.status-box.success h2 { color: #16a34a; }
+.status-box.error h2 { color: #dc2626; }
+
+.spinner { width: 40px; height: 40px; border: 3px solid #e5e7eb; border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.btn-primary {
+  padding: 11px 28px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600;
+  background: var(--primary); color: #fff; cursor: pointer; text-decoration: none; display: inline-block;
+}
+.btn-primary:hover { background: var(--primary-dark); }
+
+.btn-secondary {
+  display: inline-block; padding: 10px 24px; border: 1.5px solid var(--primary);
+  border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--primary); text-decoration: none;
+}
+.btn-secondary:hover { background: #f0fdf4; }
+
+@media (max-width: 480px) { .card { padding: 32px 24px; } }

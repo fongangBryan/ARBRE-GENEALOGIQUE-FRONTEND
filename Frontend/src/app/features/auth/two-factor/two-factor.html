@@ -1,0 +1,72 @@
+<div class="page">
+  <div class="card">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="4.5" r="1.8" fill="#fff"/>
+          <line x1="12" y1="6.3" x2="12" y2="9"/>
+          <line x1="7" y1="9" x2="17" y2="9"/>
+          <line x1="7" y1="9" x2="7" y2="12"/>
+          <line x1="17" y1="9" x2="17" y2="12"/>
+          <circle cx="7" cy="13.5" r="1.5" fill="#fff"/>
+          <circle cx="17" cy="13.5" r="1.5" fill="#fff"/>
+          <line x1="7" y1="15" x2="4" y2="18.5"/>
+          <line x1="7" y1="15" x2="10" y2="18.5"/>
+          <line x1="17" y1="15" x2="14" y2="18.5"/>
+          <line x1="17" y1="15" x2="20" y2="18.5"/>
+        </svg>
+      </div>
+      <span class="logo-name">GeneaTree</span>
+    </div>
+
+    <div class="shield-icon">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        <polyline points="9 12 11 14 15 10"/>
+      </svg>
+    </div>
+
+    <div class="header">
+      <h1>Vérification en deux étapes</h1>
+      <p>Saisissez le code à 6 chiffres affiché dans votre application Google Authenticator.</p>
+    </div>
+
+    @if (error()) {
+      <div class="alert-error" role="alert">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        {{ error() }}
+      </div>
+    }
+
+    <div class="digits-row" (paste)="onPaste($event)">
+      @for (d of digits(); track $index) {
+        <input
+          #digitInput
+          class="digit-input"
+          type="text"
+          inputmode="numeric"
+          maxlength="1"
+          [value]="d"
+          [disabled]="loading()"
+          (input)="onInput($index, $event)"
+          (keydown)="onKeydown($index, $event)"
+          autocomplete="one-time-code"
+        />
+      }
+    </div>
+
+    <button class="btn-primary" [disabled]="loading() || !codeComplete()" (click)="submit()">
+      @if (loading()) {
+        <span class="spinner"></span> Vérification…
+      } @else {
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+        Vérifier le code
+      }
+    </button>
+
+    <button class="btn-back" (click)="backToLogin()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      Retour à la connexion
+    </button>
+  </div>
+</div>

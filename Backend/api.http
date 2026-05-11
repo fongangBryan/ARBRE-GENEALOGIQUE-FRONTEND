@@ -1,6 +1,6 @@
 ### Variables
-@baseUrl = http://localhost:8000/api/v1
-# Swagger UI : http://localhost:8000/api/docs
+@baseUrl = http://localhost:8080/api/v1
+# Swagger UI : http://localhost:8080/api/docs
 @accessToken = REMPLACER_PAR_LE_TOKEN
 @refreshToken = REMPLACER_PAR_LE_REFRESH_TOKEN
 
@@ -9,10 +9,10 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 ### Health check
-GET http://localhost:8000/health
+GET http://localhost:8080/health
 
 ### Root
-GET http://localhost:8000/
+GET http://localhost:8080/
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -68,6 +68,66 @@ Content-Type: application/json
 POST {{baseUrl}}/auth/logout
 Authorization: Bearer {{accessToken}}
 
+###
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2FA — TOTP (Google Authenticator)
+# Étapes : setup-2fa → scanner le QR → verify-2fa → login avec code
+# ─────────────────────────────────────────────────────────────────────────────
+
+### 1. Initialiser la 2FA (génère secret + QR code base64)
+# ⚠ Requiert un access_token valide
+POST {{baseUrl}}/auth/setup-2fa
+Authorization: Bearer {{accessToken}}
+
+###
+
+### 2. Confirmer et activer la 2FA
+# Saisissez le code à 6 chiffres affiché dans Google Authenticator
+POST {{baseUrl}}/auth/verify-2fa
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "token": "123456"
+}
+
+###
+
+### 3. Login avec 2FA activée (1ère requête — sans code)
+# Retourne requires_2fa: true et user_id
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "Test1234!"
+}
+
+###
+
+### 4. Login avec 2FA activée (2ème requête — avec code TOTP)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "Test1234!",
+  "two_factor_code": "123456"
+}
+
+###
+
+### 5. Désactiver la 2FA (nécessite un code TOTP valide)
+POST {{baseUrl}}/auth/disable-2fa
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "token": "123456"
+}
+
+###
 
 # ─────────────────────────────────────────────────────────────────────────────
 # USERS
@@ -158,55 +218,143 @@ Authorization: Bearer {{accessToken}}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# RELATIONSHIPS
+# FILIATIONS  (parent → enfant)
 # ─────────────────────────────────────────────────────────────────────────────
 
-### Lister les relations
-GET {{baseUrl}}/relationships
-Authorization: Bearer {{accessToken}}
+@parentId = 00000000-0000-0000-0000-000000000001
+@childId  = 00000000-0000-0000-0000-000000000002
+@filiationId = 00000000-0000-0000-0000-000000000010
 
-###
-
-### Créer une relation parent-enfant
-POST {{baseUrl}}/relationships
+### Créer une filiation biologique
+POST {{baseUrl}}/filiations
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "person1_id": 1,
-  "person2_id": 2,
-  "relationship_type": "PARENT_CHILD"
+  "parent_id": "{{parentId}}",
+  "child_id":  "{{childId}}",
+  "filiation_type": "biological"
 }
 
 ###
 
-### Créer une relation conjoint
-POST {{baseUrl}}/relationships
+### Créer une filiation adoptive
+POST {{baseUrl}}/filiations
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "person1_id": 1,
-  "person2_id": 2,
-  "relationship_type": "SPOUSE"
+  "parent_id": "{{parentId}}",
+  "child_id":  "{{childId}}",
+  "filiation_type": "adoptive"
 }
 
 ###
 
-### Récupérer une relation
-GET {{baseUrl}}/relationships/1
+### Récupérer une filiation
+GET {{baseUrl}}/filiations/{{filiationId}}
 Authorization: Bearer {{accessToken}}
 
 ###
 
-### Supprimer une relation
-DELETE {{baseUrl}}/relationships/1
+### Parents d'une personne (filiations dont elle est l'enfant)
+GET {{baseUrl}}/filiations/person/{{childId}}/parents
 Authorization: Bearer {{accessToken}}
 
 ###
 
-### Relations d'une personne
-GET {{baseUrl}}/relationships?person_id=1
+### Enfants d'une personne (filiations dont elle est le parent)
+GET {{baseUrl}}/filiations/person/{{parentId}}/children
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Modifier le type d'une filiation
+PUT {{baseUrl}}/filiations/{{filiationId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "filiation_type": "step"
+}
+
+###
+
+### Supprimer une filiation
+DELETE {{baseUrl}}/filiations/{{filiationId}}
+Authorization: Bearer {{accessToken}}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# UNIONS  (conjoint / couple)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@person1Id = 00000000-0000-0000-0000-000000000001
+@person2Id = 00000000-0000-0000-0000-000000000003
+@unionId   = 00000000-0000-0000-0000-000000000020
+
+### Créer un mariage
+POST {{baseUrl}}/unions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "person_id_1": "{{person1Id}}",
+  "person_id_2": "{{person2Id}}",
+  "union_type": "mariage",
+  "date_union": "1895-07-26",
+  "lieu_union": "Paris, France",
+  "statut": "actif"
+}
+
+###
+
+### Créer une union libre
+POST {{baseUrl}}/unions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "person_id_1": "{{person1Id}}",
+  "person_id_2": "{{person2Id}}",
+  "union_type": "union_libre",
+  "statut": "actif"
+}
+
+###
+
+### Récupérer une union
+GET {{baseUrl}}/unions/{{unionId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Unions d'une personne
+GET {{baseUrl}}/unions/person/{{person1Id}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Unions entre deux personnes
+GET {{baseUrl}}/unions/between/{{person1Id}}/{{person2Id}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Dissoudre une union (divorce / veuvage)
+PUT {{baseUrl}}/unions/{{unionId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "statut": "dissous",
+  "date_dissolution": "1906-04-19"
+}
+
+###
+
+### Supprimer une union
+DELETE {{baseUrl}}/unions/{{unionId}}
 Authorization: Bearer {{accessToken}}
 
 
@@ -258,20 +406,6 @@ Content-Type: application/json
   "date": "1867-11-07",
   "place": "Varsovie, Pologne",
   "description": "Naissance de Marie Curie"
-}
-
-###
-
-### Créer un événement de mariage
-POST {{baseUrl}}/events
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-{
-  "person_id": 1,
-  "event_type": "MARRIAGE",
-  "date": "1895-07-26",
-  "place": "Paris, France"
 }
 
 ###

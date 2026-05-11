@@ -63,10 +63,11 @@ class ACLService:
         
         # Niveau privé : accès très restreint
         if person.privacy_level == PrivacyLevel.PRIVATE:
-            # Seul le créateur et les ACLs explicites
             if person.created_by == self.current_user.id:
                 return True
-            
+            # Les éditeurs peuvent accéder à toutes les personnes (arbre partagé)
+            if self.current_user.role == UserRole.EDITOR:
+                return True
             acls = self.acl_repo.get_acls_for_person(person_id, self.current_user.id)
             return len(acls) > 0
         

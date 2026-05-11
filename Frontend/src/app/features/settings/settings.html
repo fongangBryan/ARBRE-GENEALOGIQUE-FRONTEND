@@ -1,0 +1,211 @@
+<app-shell pageTitle="Paramètres" pageSubtitle="Gérez votre compte et votre sécurité">
+
+  <!-- ── Profil ── -->
+  <div class="settings-card">
+    <div class="card-hd">
+      <div class="card-icon profile-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div class="card-hd-text">
+        <h2>Profil</h2>
+        <p>Mettez à jour vos informations personnelles</p>
+      </div>
+    </div>
+
+    @if (profileMsg()) {
+      <div [class]="profileMsg()!.type === 'success' ? 'alert-success' : 'alert-error'">{{ profileMsg()!.text }}</div>
+    }
+
+    @if (user()) {
+      <div class="user-row">
+        <div class="u-avatar">{{ userInitials() }}</div>
+        <div>
+          <p class="u-email">{{ user()!.email }}</p>
+          <p class="u-role">{{ roleLabel(user()!.role) }}</p>
+        </div>
+      </div>
+    }
+
+    <div class="form-grid" [formGroup]="profileForm">
+      <div class="field">
+        <label>Prénom</label>
+        <input formControlName="first_name" placeholder="Jean"/>
+      </div>
+      <div class="field">
+        <label>Nom</label>
+        <input formControlName="last_name" placeholder="Dupont"/>
+      </div>
+    </div>
+
+    <div class="card-ft">
+      <button class="btn-save" (click)="saveProfile()" [disabled]="savingProfile()">
+        @if (savingProfile()) { <span class="spinner"></span> } @else { Enregistrer }
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Vérification email ── -->
+  @if (user() && !user()!.is_verified) {
+    <div class="settings-card verif-card">
+      <div class="card-hd">
+        <div class="card-icon verif-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
+        </div>
+        <div class="card-hd-text">
+          <h2>Vérification email</h2>
+          <p>Votre adresse email n'est pas encore vérifiée</p>
+        </div>
+        <span class="badge-unverified">Non vérifié</span>
+      </div>
+      @if (verifMsg()) {
+        <div [class]="verifMsg()!.type === 'success' ? 'alert-success' : 'alert-error'">{{ verifMsg()!.text }}</div>
+      }
+      <p class="verif-hint">Cliquez sur le bouton ci-dessous pour recevoir un nouveau lien de confirmation par email.</p>
+      <div class="card-ft">
+        <button class="btn-save" (click)="resendVerification()" [disabled]="sendingVerif()">
+          @if (sendingVerif()) { <span class="spinner"></span> Envoi… } @else { Renvoyer l'email de vérification }
+        </button>
+      </div>
+    </div>
+  }
+  @if (user()?.is_verified) {
+    <div class="settings-card verif-card-ok">
+      <div class="card-hd">
+        <div class="card-icon verif-icon-ok">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+        </div>
+        <div class="card-hd-text">
+          <h2>Email vérifié</h2>
+          <p>Votre adresse email a été confirmée</p>
+        </div>
+        <span class="badge-verified">Vérifié</span>
+      </div>
+    </div>
+  }
+
+  <!-- ── Mot de passe ── -->
+  <div class="settings-card">
+    <div class="card-hd">
+      <div class="card-icon pwd-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <div class="card-hd-text">
+        <h2>Mot de passe</h2>
+        <p>Changez votre mot de passe de connexion</p>
+      </div>
+    </div>
+
+    @if (pwdMsg()) {
+      <div [class]="pwdMsg()!.type === 'success' ? 'alert-success' : 'alert-error'">{{ pwdMsg()!.text }}</div>
+    }
+
+    <div class="form-col" [formGroup]="pwdForm">
+      <div class="field">
+        <label>Mot de passe actuel</label>
+        <input type="password" formControlName="current_password" placeholder="••••••••"/>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Nouveau mot de passe</label>
+          <input type="password" formControlName="new_password" placeholder="8 caractères minimum"/>
+        </div>
+        <div class="field">
+          <label>Confirmer le nouveau</label>
+          <input type="password" formControlName="confirm_password" placeholder="••••••••"/>
+        </div>
+      </div>
+      @if (pwdForm.hasError('mismatch') && pwdForm.get('confirm_password')?.dirty) {
+        <p class="field-error">Les mots de passe ne correspondent pas.</p>
+      }
+    </div>
+
+    <div class="card-ft">
+      <button class="btn-save" (click)="changePassword()" [disabled]="savingPwd()">
+        @if (savingPwd()) { <span class="spinner"></span> } @else { Modifier le mot de passe }
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Double authentification ── -->
+  <div class="settings-card">
+    <div class="card-hd">
+      <div class="card-icon twofa-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div class="card-hd-text">
+        <h2>Double authentification (2FA)</h2>
+        <p>Renforcez la sécurité de votre compte avec une application OTP</p>
+      </div>
+      @if (user()?.is_2fa_enabled) {
+        <span class="badge-on">Activé</span>
+      } @else {
+        <span class="badge-off">Désactivé</span>
+      }
+    </div>
+
+    @if (twoFaMsg()) {
+      <div [class]="twoFaMsg()!.type === 'success' ? 'alert-success' : 'alert-error'">{{ twoFaMsg()!.text }}</div>
+    }
+
+    @if (!user()?.is_2fa_enabled) {
+      @if (!qrCode()) {
+        <p class="twofa-desc">
+          Utilisez une application comme <strong>Google Authenticator</strong> ou <strong>Authy</strong>
+          pour scanner un QR code et générer des codes de connexion à usage unique.
+        </p>
+        <button class="btn-2fa" (click)="setup2fa()" [disabled]="saving2fa()">
+          @if (saving2fa()) { <span class="spinner-dark"></span> } @else { Configurer la 2FA }
+        </button>
+      } @else {
+        <div class="qr-section">
+          <div class="qr-col">
+            <div class="qr-wrap">
+              <img [src]="qrCode()!" alt="QR Code" class="qr-img"/>
+            </div>
+          </div>
+          <div class="qr-instructions">
+            <p class="step"><span class="step-num">1</span> Scannez ce QR code avec votre application d'authentification.</p>
+            @if (twoFaSecret()) {
+              <div class="secret-box">
+                <span class="secret-label">Clé manuelle</span>
+                <code class="secret-code">{{ twoFaSecret() }}</code>
+              </div>
+            }
+            <p class="step"><span class="step-num">2</span> Entrez le code à 6 chiffres affiché dans l'application.</p>
+            <div class="token-row">
+              <input class="token-input" type="text" maxlength="6" inputmode="numeric"
+                placeholder="000 000"
+                [ngModel]="twoFaToken()" (ngModelChange)="twoFaToken.set($event)"/>
+              <button class="btn-save" (click)="verify2fa()" [disabled]="twoFaToken().length !== 6 || saving2fa()">
+                @if (saving2fa()) { <span class="spinner"></span> } @else { Activer }
+              </button>
+              <button class="btn-cancel" (click)="cancelSetup()">Annuler</button>
+            </div>
+          </div>
+        </div>
+      }
+    } @else {
+      <p class="twofa-desc twofa-active">
+        <span class="material-symbols-rounded twofa-check-icon">verified_user</span>
+        La double authentification est activée. Votre compte est protégé.
+      </p>
+      @if (!showDisable()) {
+        <button class="btn-danger-outline" (click)="showDisable.set(true)">Désactiver la 2FA</button>
+      } @else {
+        <div class="disable-section">
+          <p>Entrez un code depuis votre application pour confirmer la désactivation :</p>
+          <div class="token-row">
+            <input class="token-input" type="text" maxlength="6" inputmode="numeric"
+              placeholder="000 000"
+              [ngModel]="disableToken()" (ngModelChange)="disableToken.set($event)"/>
+            <button class="btn-danger" (click)="disable2fa()" [disabled]="disableToken().length !== 6 || saving2fa()">
+              @if (saving2fa()) { <span class="spinner"></span> } @else { Désactiver }
+            </button>
+            <button class="btn-cancel" (click)="showDisable.set(false); disableToken.set('')">Annuler</button>
+          </div>
+        </div>
+      }
+    }
+  </div>
+
+</app-shell>

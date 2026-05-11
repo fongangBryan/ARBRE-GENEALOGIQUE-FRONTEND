@@ -1,0 +1,63 @@
+<app-shell pageTitle="Arbre généalogique" pageSubtitle="Visualisez les connexions familiales">
+
+  <div class="tree-toolbar">
+    <div class="sel-field">
+      <label>Membre de référence</label>
+      <select [ngModel]="selectedId()" (ngModelChange)="selectedId.set($event)">
+        <option value="">— Sélectionner un membre —</option>
+        @for (p of persons(); track p.id) {
+          <option [value]="p.id">{{ p.first_name }} {{ p.last_name }}</option>
+        }
+      </select>
+    </div>
+    <div class="sel-field">
+      <label>Vue</label>
+      <select [ngModel]="viewType()" (ngModelChange)="viewType.set($event)">
+        <option value="family">Famille immédiate</option>
+        <option value="ancestors">Ancêtres (4 générations)</option>
+        <option value="descendants">Descendants (3 générations)</option>
+      </select>
+    </div>
+    <button class="btn-viz" (click)="visualize()" [disabled]="!selectedId() || loading()">
+      @if (loading()) {
+        <span class="spinner"></span>
+      } @else {
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L12 7"/><path d="M12 7C12 7 8 9 6 13H18C16 9 12 7 12 7Z"/><path d="M12 13V22"/><path d="M8 18H16"/></svg>
+        Visualiser
+      }
+    </button>
+  </div>
+
+  @if (error()) {
+    <div class="alert-error">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      {{ error() }}
+    </div>
+  }
+
+  <div class="tree-card">
+    @if (!hasData() && !loading()) {
+      <div class="tree-empty">
+        <div class="empty-icon">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#02E08E" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L12 7"/><path d="M12 7C12 7 8 9 6 13H18C16 9 12 7 12 7Z"/><path d="M12 13V22"/><path d="M8 18H16"/></svg>
+        </div>
+        <p class="empty-title">Sélectionnez un membre pour visualiser son arbre</p>
+        <p class="empty-sub">Choisissez une personne dans la liste ci-dessus puis cliquez sur « Visualiser ».</p>
+      </div>
+    }
+    <div class="tree-wrap" #treeWrap [style.display]="hasData() ? 'block' : 'none'"></div>
+  </div>
+
+  <div class="legend">
+    <span class="leg-title">Légende :</span>
+    <span class="leg-item"><span class="dot male"></span>Homme</span>
+    <span class="leg-item"><span class="dot female"></span>Femme</span>
+    <span class="leg-item"><span class="dot neutral"></span>Non précisé</span>
+    <span class="leg-item"><span class="dot deceased"></span>Décédé(e)</span>
+    <span class="leg-divider"></span>
+    <span class="leg-item"><span class="line-seg parent"></span>Filiation</span>
+    <span class="leg-item"><span class="line-seg spouse"></span>Union</span>
+    <span class="leg-hint">Pavé de défilement pour zoomer · Glisser pour déplacer</span>
+  </div>
+
+</app-shell>

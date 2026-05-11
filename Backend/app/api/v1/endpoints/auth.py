@@ -3,7 +3,11 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 
 from app.db.session import get_db
-from app.schemas.auth import UserRegister, UserLogin, Token, TokenRefresh, LoginResponse
+from app.schemas.auth import (
+    UserRegister, UserLogin, Token, TokenRefresh, LoginResponse,
+    TwoFactorSetup, TwoFactorVerify,
+    ForgotPasswordRequest, ResetPasswordRequest, MessageResponse,
+)
 from app.services.auth_service import AuthService
 from app.services.user_service import UserService  # NOUVEAU
 from app.core.security import create_access_token, create_refresh_token, decode_token
@@ -85,7 +89,7 @@ def refresh_token(refresh_data: TokenRefresh, db: Session = Depends(get_db)):
     
     return Token(access_token=new_access_token, refresh_token=new_refresh_token)
 
-@router.post("/setup-2fa")
+@router.post("/setup-2fa", response_model=TwoFactorSetup)
 def setup_two_factor(
     current_user = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -95,13 +99,57 @@ def setup_two_factor(
 
 @router.post("/verify-2fa")
 def verify_two_factor(
-    token: str,
+    body: TwoFactorVerify,
     current_user = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     auth_service = AuthService(db)
-    return auth_service.verify_two_factor(current_user, token)
+    return auth_service.verify_two_factor(current_user, body.token)
+
+@router.post("/disable-2fa")
+def disable_two_factor(
+    body: TwoFactorVerify,
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    auth_service = AuthService(db)
+    return auth_service.disable_two_factor(current_user, body.token)
 
 @router.post("/logout")
 def logout(current_user = Depends(get_current_user)):
     return {"message": "Logged out successfully"}
+
+
+@router.post("/verify-email", response_model=MessageResponse)
+def verify_email(token: str, db: Session = Depends(get_db)):
+    """Vérifie l'adresse email via le token reçu par email."""
+    auth_service = AuthService(db)
+    auth_service.verify_email(token)
+    return MessageResponse(message="Email vérifié avec succès")
+
+
+@router.post("/resend-verification", response_model=MessageResponse)
+def resend_verification(
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Renvoie l'email de vérification."""
+    auth_service = AuthService(db)
+    auth_service.resend_verification(current_user)
+    return MessageResponse(message="Email de vérification renvoyé")
+
+
+@router.post("/forgot-password", response_model=MessageResponse)
+def forgot_password(body: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    """Envoie un email de réinitialisation de mot de passe."""
+    auth_service = AuthService(db)
+    auth_service.forgot_password(body.email)
+    return MessageResponse(message="Si cet email existe, un lien de réinitialisation a été envoyé")
+
+
+@router.post("/reset-password", response_model=MessageResponse)
+def reset_password(body: ResetPasswordRequest, db: Session = Depends(get_db)):
+    """Réinitialise le mot de passe via le token reçu par email."""
+    auth_service = AuthService(db)
+    auth_service.reset_password(body.token, body.new_password)
+    return MessageResponse(message="Mot de passe réinitialisé avec succès")
