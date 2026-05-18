@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [dev, main]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   # ──────────────────────────────────────────────────────────────
   # Backend — tests Python
@@ -16,6 +19,21 @@ jobs:
     defaults:
       run:
         working-directory: Backend
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: genealogie_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v4
@@ -36,6 +54,11 @@ jobs:
           SECRET_KEY: ci-secret-key-not-used-in-prod
           ALGORITHM: HS256
           ACCESS_TOKEN_EXPIRE_MINUTES: 30
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_NAME: genealogie_test
 
   # ──────────────────────────────────────────────────────────────
   # Frontend — build de production
@@ -52,7 +75,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
           cache-dependency-path: Frontend/package-lock.json
 
