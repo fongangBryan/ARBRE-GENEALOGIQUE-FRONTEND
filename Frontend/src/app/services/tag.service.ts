@@ -1,8 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Tag, TagCreate, TagUpdate, TagListResponse } from '../models/tag.model';
+import { environment } from '../../environments/environment';
 
-const API = 'http://localhost:8090/api/v1';
+const API = environment.apiUrl;
 
 @Injectable({ providedIn: 'root' })
 export class TagService {

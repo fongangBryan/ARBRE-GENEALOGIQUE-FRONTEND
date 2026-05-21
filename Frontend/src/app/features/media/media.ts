@@ -9,6 +9,7 @@ import { Media } from '../../models/media.model';
 import { Person } from '../../models/person.model';
 import { Union } from '../../models/union.model';
 import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-media',
@@ -169,7 +170,7 @@ export class MediaComponent implements OnInit {
     });
   }
 
-  private readonly API_BASE = 'http://localhost:8090';
+  private readonly API_BASE = environment.apiBase;
 
   getMediaSrc(m: Media): string {
     const url = m.thumbnail_url || m.url;

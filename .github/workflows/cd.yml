@@ -12,7 +12,7 @@ env:
 
 jobs:
   # ──────────────────────────────────────────────────────────────
-  # Build & push les images Docker sur GitHub Container Registry
+  # Build & push Backend sur GitHub Container Registry
   # ──────────────────────────────────────────────────────────────
   build-push-backend:
     name: Publish · Backend
@@ -52,6 +52,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  # ──────────────────────────────────────────────────────────────
+  # Build & push Frontend (production Nginx) sur ghcr.io
+  # ──────────────────────────────────────────────────────────────
   build-push-frontend:
     name: Publish · Frontend
     runs-on: ubuntu-latest
@@ -83,6 +86,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./Frontend
+          file: ./Frontend/Dockerfile.prod
+          target: runner
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -90,10 +95,10 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ──────────────────────────────────────────────────────────────
-  # Déploiement — à adapter selon ton hébergeur (VPS, Railway…)
+  # Déploiement sur Amazon EC2 via SSH
   # ──────────────────────────────────────────────────────────────
   deploy:
-    name: Deploy
+    name: Deploy · EC2
     runs-on: ubuntu-latest
     needs: [build-push-backend, build-push-frontend]
     environment: production
@@ -101,23 +106,53 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Exemple pour un VPS via SSH — décommente et adapte quand tu as un serveur
-      # - name: Deploy via SSH
-      #   uses: appleboy/ssh-action@v1
-      #   with:
-      #     host: ${{ secrets.SSH_HOST }}
-      #     username: ${{ secrets.SSH_USER }}
-      #     key: ${{ secrets.SSH_PRIVATE_KEY }}
-      #     script: |
-      #       cd /opt/genealogie
-      #       docker compose pull
-      #       docker compose up -d --remove-orphans
+      - name: Copy docker-compose.prod.yml to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.prod.yml"
+          target: "/opt/genealogie"
 
-      - name: Deployment placeholder
-        run: |
-          echo "Images publiées :"
-          echo "  Backend  → ghcr.io/${{ github.repository }}/backend:sha-${{ github.sha }}"
-          echo "  Frontend → ghcr.io/${{ github.repository }}/frontend:sha-${{ github.sha }}"
-          echo ""
-          echo "Configure SSH_HOST / SSH_USER / SSH_PRIVATE_KEY dans les secrets GitHub"
-          echo "puis décommente le step 'Deploy via SSH' ci-dessus."
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          DB_USER: postgres
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: genealogie_db
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          MINIO_ACCESS_KEY: minioadmin
+          MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          DOMAIN: ${{ secrets.DOMAIN }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: GHCR_TOKEN,DB_USER,DB_PASSWORD,DB_NAME,SECRET_KEY,MINIO_ACCESS_KEY,MINIO_SECRET_KEY,ADMIN_EMAIL,ADMIN_PASSWORD,GITHUB_REPOSITORY,GITHUB_ACTOR,DOMAIN
+          script: |
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+
+            cat > /opt/genealogie/.env.prod << EOF
+            GITHUB_REPOSITORY=$GITHUB_REPOSITORY
+            DB_USER=$DB_USER
+            DB_PASSWORD=$DB_PASSWORD
+            DB_NAME=$DB_NAME
+            SECRET_KEY=$SECRET_KEY
+            MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY
+            MINIO_SECRET_KEY=$MINIO_SECRET_KEY
+            ADMIN_EMAIL=$ADMIN_EMAIL
+            ADMIN_PASSWORD=$ADMIN_PASSWORD
+            DOMAIN=$DOMAIN
+            EOF
+
+            cd /opt/genealogie
+            docker compose -f docker-compose.prod.yml --env-file .env.prod pull
+            docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --remove-orphans
+            docker image prune -f
+            echo "Déploiement terminé — $(date)"

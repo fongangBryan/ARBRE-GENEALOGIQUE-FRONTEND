@@ -1,8 +1,9 @@
 ﻿import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { User, UserListResponse, UserRole } from '../models/user.model';
+import { environment } from '../../environments/environment';
 
-const API = 'http://localhost:8090/api/v1';
+const API = environment.apiUrl;
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {

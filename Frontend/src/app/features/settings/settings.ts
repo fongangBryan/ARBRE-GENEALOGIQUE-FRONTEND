@@ -4,8 +4,9 @@ import { HttpClient } from '@angular/common/http';
 import { AppShellComponent } from '../../shared/components/app-shell/app-shell';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user.model';
+import { environment } from '../../../environments/environment';
 
-const API = 'http://localhost:8090/api/v1';
+const API = environment.apiUrl;
 
 type Msg = { type: 'success' | 'error'; text: string } | null;
 

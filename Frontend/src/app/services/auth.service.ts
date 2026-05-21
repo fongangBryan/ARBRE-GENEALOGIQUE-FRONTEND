@@ -5,8 +5,9 @@ import { tap, map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { LoginRequest, LoginResponse, RegisterRequest, TokenResponse } from '../models/auth.model';
 import { User } from '../models/user.model';
+import { environment } from '../../environments/environment';
 
-const API = 'http://localhost:8090/api/v1';
+const API = environment.apiUrl;
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
