@@ -4,8 +4,9 @@ import { HttpClient } from '@angular/common/http';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 
-const API = 'http://localhost:8090/api/v1';
+const API = environment.apiUrl;
 
 interface Person {
   id: string;

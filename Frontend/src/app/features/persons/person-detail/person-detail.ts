@@ -13,6 +13,7 @@ import { MediaService } from '../../../services/media.service';
 import { EventService } from '../../../services/event.service';
 import { TagService } from '../../../services/tag.service';
 import { AuthService } from '../../../services/auth.service';
+import { environment } from '../../../../environments/environment';
 import { Person, PersonCreate } from '../../../models/person.model';
 import { Filiation, FiliationType } from '../../../models/filiation.model';
 import { Union, UnionType, UnionStatut } from '../../../models/union.model';
@@ -183,7 +184,7 @@ export class PersonDetailComponent implements OnInit {
     const m: Record<string, string> = { birth: 'child_care', death: 'candle', baptism: 'water_drop', burial: 'yard', education: 'school', employment: 'work', residence: 'home', custom: 'event' };
     return m[t] ?? 'event';
   }
-  private readonly API_BASE = 'http://localhost:8090';
+  private readonly API_BASE = environment.apiBase;
   getMediaSrc(m: Media): string {
     const url = m.thumbnail_url || m.url;
     if (!url) return '';

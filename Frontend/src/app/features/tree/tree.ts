@@ -8,8 +8,9 @@ import * as d3 from 'd3';
 import { AppShellComponent } from '../../shared/components/app-shell/app-shell';
 import { PersonService } from '../../services/person.service';
 import { Person } from '../../models/person.model';
+import { environment } from '../../../environments/environment';
 
-const API = 'http://localhost:8090/api/v1';
+const API = environment.apiUrl;
 
 // ── Card geometry ─────────────────────────────────────────────────────────────
 const CW = 160;   // card width

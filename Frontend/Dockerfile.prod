@@ -1,0 +1,17 @@
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --silent
+COPY . .
+RUN npx ng build --configuration=production
+
+FROM nginx:alpine AS runner
+COPY --from=builder /app/dist/arbre-genealogique/browser /usr/share/nginx/html
+COPY nginx-http.conf  /etc/nginx/templates/nginx-http.conf
+COPY nginx-https.conf /etc/nginx/templates/nginx-https.conf
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh \
+ && mkdir -p /var/www/certbot \
+ && rm -f /etc/nginx/conf.d/default.conf
+EXPOSE 80 443
+ENTRYPOINT ["/docker-entrypoint.sh"]
