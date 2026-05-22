@@ -36,6 +36,8 @@ COPY --from=builder /install /usr/local
 # Le code source est monté via volume en dev (COPY . . pour la prod)
 COPY --chown=appuser:appgroup . .
 
+RUN mkdir -p /app/uploads && chown appuser:appgroup /app/uploads
+
 ENV PYTHONPATH=/app \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
