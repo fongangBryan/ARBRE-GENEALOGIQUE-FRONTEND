@@ -36,7 +36,22 @@ class Settings(BaseSettings):
     
     # 2FA
     TOTP_ISSUER_NAME: str = "GenealogieApp"
-    
+
+    # Email
+    SMTP_HOST: str = "localhost"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM: str = "noreply@genealogie.local"
+    EMAIL_BACKEND: str = "console"  # "console" | "smtp"
+
+    # Frontend
+    FRONTEND_URL: str = "http://localhost:4200"
+
+    # Token expiry
+    VERIFICATION_TOKEN_EXPIRE_HOURS: int = 24
+    RESET_TOKEN_EXPIRE_MINUTES: int = 30
+
     model_config = ConfigDict(env_file=".env.dev", extra="ignore")
 
 settings = Settings()

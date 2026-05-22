@@ -8,16 +8,14 @@ import enum
 from app.db.base import Base
 
 class EventType(str, enum.Enum):
-    BIRTH = "birth"
-    DEATH = "death"
-    MARRIAGE = "marriage"
-    DIVORCE = "divorce"
-    BAPTISM = "baptism"
-    BURIAL = "burial"
-    EDUCATION = "education"
+    BIRTH      = "birth"
+    DEATH      = "death"
+    BAPTISM    = "baptism"
+    BURIAL     = "burial"
+    EDUCATION  = "education"
     EMPLOYMENT = "employment"
-    RESIDENCE = "residence"
-    CUSTOM = "custom"
+    RESIDENCE  = "residence"
+    CUSTOM     = "custom"
 
 class Event(Base):
     __tablename__ = "events"

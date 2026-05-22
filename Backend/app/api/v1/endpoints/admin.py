@@ -1,25 +1,78 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import desc
 from typing import Optional, List
 from uuid import UUID
 
 from app.db.session import get_db
-from app.schemas.user import UserResponse, UserUpdate, UserRoleUpdate
+from app.schemas.user import UserResponse, UserUpdate, UserRoleUpdate, UserListResponse
 from app.schemas.acl import AccessControlCreate, AccessControlResponse
 from app.schemas.common import StatsResponse, SystemInfoResponse
 from app.services.user_service import UserService
 from app.services.acl_service import ACLService
 from app.services.export_service import ExportService
+from app.models.audit_log import AuditLog
+from app.models.user import User
+from app.core.security import create_email_token
+from app.config import settings
+from datetime import timedelta
 from app.api.deps import get_current_admin_user
-from app.api.v1.guards.roles import require_admin  # NOUVEAU
-from app.core.exceptions import NotFoundException, PermissionDeniedException, ConflictException  # NOUVEAU
+from app.api.v1.guards.roles import require_admin
+from app.core.exceptions import NotFoundException, PermissionDeniedException, ConflictException
 
 router = APIRouter(prefix="/admin", tags=["Admin"], dependencies=[Depends(require_admin)])  # MODIFIÉ - Protection au niveau du router
 
 
+# ============ JOURNAL D'ACTIVITÉ ============
+
+@router.get("/logs")
+def get_audit_logs(
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, ge=1, le=200),
+    user_id: Optional[UUID] = Query(None),
+    action: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """Journal d'activité global (Admin uniquement)."""
+    q = db.query(AuditLog)
+    if user_id:
+        q = q.filter(AuditLog.user_id == user_id)
+    if action:
+        q = q.filter(AuditLog.action == action)
+    total = q.count()
+    logs = q.order_by(desc(AuditLog.created_at)).offset((page - 1) * limit).limit(limit).all()
+
+    # Résoudre les emails en une seule requête
+    user_ids = {log.user_id for log in logs if log.user_id}
+    users_map: dict = {}
+    if user_ids:
+        rows = db.query(User.id, User.email, User.first_name, User.last_name).filter(User.id.in_(user_ids)).all()
+        for r in rows:
+            users_map[str(r.id)] = {
+                "email": r.email,
+                "first_name": r.first_name,
+                "last_name": r.last_name,
+            }
+
+    items = [
+        {
+            "id": str(log.id),
+            "action": log.action,
+            "resource_type": log.resource_type,
+            "resource_id": log.resource_id,
+            "detail": log.detail,
+            "ip_address": log.ip_address,
+            "created_at": log.created_at.isoformat() if log.created_at else None,
+            "user": users_map.get(str(log.user_id)) if log.user_id else None,
+        }
+        for log in logs
+    ]
+    return {"items": items, "total": total, "page": page, "pages": max(1, (total + limit - 1) // limit)}
+
+
 # ============ GESTION DES UTILISATEURS ============
 
-@router.get("/users", response_model=List[UserResponse])
+@router.get("/users", response_model=UserListResponse)
 def list_users(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
@@ -29,7 +82,8 @@ def list_users(
     """Liste tous les utilisateurs (Admin uniquement)"""
     user_service = UserService(db)
     users, total = user_service.list_users(search, page, limit)
-    return users
+    pages = (total + limit - 1) // limit if total > 0 else 1
+    return UserListResponse(items=users, total=total, page=page, limit=limit, pages=pages)
 
 
 @router.get("/users/{user_id}", response_model=UserResponse)
@@ -100,6 +154,44 @@ def activate_user(
     if not user:
         raise NotFoundException("User", user_id)
     return {"message": "User activated"}
+
+
+@router.post("/users/{user_id}/verification-link")
+def get_verification_link(
+    user_id: UUID,
+    db: Session = Depends(get_db)
+):
+    """Génère un lien de vérification email pour un utilisateur (sans envoyer d'email)."""
+    user_service = UserService(db)
+    user = user_service.get_by_id(user_id)
+    if not user:
+        raise NotFoundException("User", user_id)
+    if user.is_verified:
+        raise HTTPException(status_code=400, detail="Email déjà vérifié")
+    token = create_email_token(
+        str(user.id), "email_verification",
+        timedelta(hours=settings.VERIFICATION_TOKEN_EXPIRE_HOURS)
+    )
+    link = f"{settings.FRONTEND_URL}/auth/verify-email?token={token}"
+    return {"link": link, "expires_hours": settings.VERIFICATION_TOKEN_EXPIRE_HOURS}
+
+
+@router.post("/users/{user_id}/reset-link")
+def get_reset_link(
+    user_id: UUID,
+    db: Session = Depends(get_db)
+):
+    """Génère un lien de réinitialisation de mot de passe pour un utilisateur (sans envoyer d'email)."""
+    user_service = UserService(db)
+    user = user_service.get_by_id(user_id)
+    if not user:
+        raise NotFoundException("User", user_id)
+    token = create_email_token(
+        str(user.id), "password_reset",
+        timedelta(minutes=settings.RESET_TOKEN_EXPIRE_MINUTES)
+    )
+    link = f"{settings.FRONTEND_URL}/auth/reset-password?token={token}"
+    return {"link": link, "expires_minutes": settings.RESET_TOKEN_EXPIRE_MINUTES}
 
 
 @router.post("/users/{user_id}/deactivate")

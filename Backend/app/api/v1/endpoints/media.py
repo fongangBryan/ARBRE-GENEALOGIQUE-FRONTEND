@@ -28,7 +28,7 @@ async def upload_media(
     owner_type: str = Form(..., description="person, event, or user"),
     owner_id: UUID = Form(...),
     media_type: MediaTypeEnum = Form(default=MediaTypeEnum.IMAGE),
-    privacy_level: str = Form(default="private"),
+    privacy_level: str = Form(default="family"),
     current_user = Depends(get_current_editor_user),
     db: Session = Depends(get_db)
 ):
@@ -71,7 +71,8 @@ async def upload_media(
             storage_key=media.storage_key,
             thumbnail_key=media.thumbnail_key,
             url=f"/api/v1/media/{media.id}",
-            thumbnail_url=f"/api/v1/media/{media.id}/thumbnail"
+            thumbnail_url=f"/api/v1/media/{media.id}/thumbnail" if media.thumbnail_key else None,
+            mime_type=file.content_type
         )
     
     except ValueError as e:
@@ -81,21 +82,19 @@ async def upload_media(
 @router.get("/{media_id}", response_model=None)
 def get_media(
     media_id: UUID,
-    current_user = Depends(get_current_user),
     db: Session = Depends(get_db),
-    _ = Depends(require_media_access)  # NOUVEAU
 ):
-    """Récupère un fichier média (avec vérification des droits)"""
+    """Récupère un fichier média (accès public par UUID)"""
     media_service = MediaService(db)
-    
+
     media = media_service.get_media(media_id)
     if not media:
         raise NotFoundException("Media", media_id)
-    
+
     file_path = media_service.get_media_file_path(media.storage_key)
     if not os.path.exists(file_path):
         raise NotFoundException("File", media.storage_key)
-    
+
     return FileResponse(
         file_path,
         media_type=media.mime_type,
@@ -106,24 +105,26 @@ def get_media(
 @router.get("/{media_id}/thumbnail", response_model=None)
 def get_media_thumbnail(
     media_id: UUID,
-    current_user = Depends(get_current_user),
     db: Session = Depends(get_db),
-    _ = Depends(require_media_access)  # NOUVEAU
 ):
-    """Récupère la miniature d'un média"""
+    """Récupère la miniature d'un média (accès public par UUID)"""
     media_service = MediaService(db)
-    
+
     media = media_service.get_media(media_id)
     if not media:
         raise NotFoundException("Media", media_id)
-    
+
     if not media.thumbnail_key:
-        raise NotFoundException("Thumbnail", "not available")
-    
+        # Renvoie l'original si pas de miniature
+        file_path = media_service.get_media_file_path(media.storage_key)
+        if not os.path.exists(file_path):
+            raise NotFoundException("File", media.storage_key)
+        return FileResponse(file_path, media_type=media.mime_type)
+
     file_path = media_service.get_media_file_path(media.thumbnail_key)
     if not os.path.exists(file_path):
         raise NotFoundException("Thumbnail", "not found")
-    
+
     return FileResponse(file_path)
 
 

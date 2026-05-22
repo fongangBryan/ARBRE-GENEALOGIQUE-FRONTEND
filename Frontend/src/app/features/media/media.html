@@ -1,0 +1,202 @@
+<app-shell pageTitle="Photos & Médias" pageSubtitle="Gérez les photos et fichiers de l'arbre">
+
+  @if (success()) {
+    <div class="alert-success">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      {{ success() }}
+    </div>
+  }
+  @if (error()) {
+    <div class="alert-error">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Owner selector -->
+  <div class="owner-bar">
+    <div class="type-tabs">
+      <button class="type-tab" [class.active]="ownerType() === 'person'" (click)="changeOwnerType('person')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Membre
+      </button>
+      <button class="type-tab" [class.active]="ownerType() === 'union'" (click)="changeOwnerType('union')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="12" r="3"/><circle cx="15" cy="12" r="3"/></svg>
+        Union
+      </button>
+    </div>
+
+    <div class="sel-row">
+      @if (ownerType() === 'union') {
+        <div class="sel-field">
+          <label>Membre de référence</label>
+          <select [ngModel]="selectedPid()" (ngModelChange)="onPersonSelect($event)">
+            <option value="">— Sélectionner un membre —</option>
+            @for (p of persons(); track p.id) {
+              <option [value]="p.id">{{ p.first_name }} {{ p.last_name }}</option>
+            }
+          </select>
+        </div>
+        @if (selectedPid()) {
+          <div class="sel-field">
+            <label>Union</label>
+            <select [ngModel]="ownerId()" (ngModelChange)="onUnionSelect($event)">
+              <option value="">— Sélectionner une union —</option>
+              @for (u of availableUnions(); track u.id) {
+                <option [value]="u.id">{{ unionLabel(u) }}</option>
+              }
+            </select>
+          </div>
+        }
+      } @else {
+        <div class="sel-field">
+          <label>Membre</label>
+          <select [ngModel]="selectedPid()" (ngModelChange)="onPersonSelect($event)">
+            <option value="">— Sélectionner un membre —</option>
+            @for (p of persons(); track p.id) {
+              <option [value]="p.id">{{ p.first_name }} {{ p.last_name }}</option>
+            }
+          </select>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Upload zone -->
+  @if (ownerId() && isEditor()) {
+    <div class="upload-zone"
+      [class.drag-active]="dragOver()"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave()"
+      (drop)="onDrop($event)"
+      (click)="triggerInput()">
+      <input #fileInput type="file" accept="image/*,video/*,application/pdf,audio/*"
+        style="display:none" (change)="onFileChange($event)"/>
+      @if (uploading()) {
+        <div class="upload-progress">
+          <div class="progress-bar"><div class="progress-fill" [style.width.%]="progress()"></div></div>
+          <p>Upload en cours… {{ progress() }}%</p>
+        </div>
+      } @else {
+        <div class="upload-inner">
+          <div class="upload-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#02E08E" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <p class="upload-title">Glissez un fichier ici ou <span class="upload-link">cliquez pour sélectionner</span></p>
+          <p class="upload-hint">Images, vidéos, PDF, audio</p>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Gallery -->
+  <div class="gallery-section">
+    @if (!ownerId()) {
+      <div class="empty-gallery">
+        <div class="empty-icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#02E08E" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </div>
+        <p class="empty-title">Sélectionnez un propriétaire pour voir ses médias</p>
+      </div>
+    } @else if (loading()) {
+      <div class="gallery-grid sk-gallery">
+        @for (i of [1,2,3,4,5,6]; track i) {
+          <div class="sk-media"></div>
+        }
+      </div>
+    } @else if (media().length === 0) {
+      <div class="empty-gallery">
+        <div class="empty-icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#02E08E" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </div>
+        <p class="empty-title">Aucun média pour ce propriétaire</p>
+      </div>
+    } @else {
+      <div class="gallery-count">{{ media().length }} fichier{{ media().length !== 1 ? 's' : '' }}</div>
+      <div class="gallery-grid">
+        @for (m of media(); track m.id) {
+          <div class="media-card" (click)="openPreview(m)" style="cursor:pointer">
+            <div class="media-thumb">
+              @if (isImage(m)) {
+                <img [src]="getMediaSrc(m)" [alt]="fileName(m)" loading="lazy"/>
+              } @else if (isPdf(m)) {
+                <div class="file-thumb file-thumb-pdf">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+                  <span class="file-ext">PDF</span>
+                </div>
+              } @else {
+                <div class="file-thumb">
+                  <span class="file-ext">{{ fileExt(m) }}</span>
+                </div>
+              }
+            </div>
+            <div class="media-info">
+              <p class="media-name" [title]="fileName(m)">{{ fileName(m) }}</p>
+            </div>
+            @if (isEditor()) {
+              <button class="media-del" (click)="openDelete(m); $event.stopPropagation()" title="Supprimer">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+</app-shell>
+
+<!-- ══════ MODAL PREVIEW ══════ -->
+@if (previewTarget()) {
+  <div class="modal-bg preview-bg" (click)="closePreview()">
+    <div class="preview-modal" (click)="$event.stopPropagation()">
+      <div class="preview-header">
+        <span class="preview-title">{{ fileName(previewTarget()!) }}</span>
+        <div class="preview-actions">
+          <a [href]="getMediaSrc(previewTarget()!)" target="_blank" class="preview-btn-dl" title="Ouvrir dans un nouvel onglet">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>
+          <button class="preview-close" (click)="closePreview()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="preview-body">
+        @if (isImage(previewTarget()!)) {
+          <img [src]="getMediaSrc(previewTarget()!)" [alt]="fileName(previewTarget()!)" class="preview-img"/>
+        } @else if (isPdf(previewTarget()!)) {
+          <iframe [src]="pdfSrc(previewTarget()!)" class="preview-pdf" title="PDF"></iframe>
+        } @else {
+          <div class="preview-other">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <p>{{ fileName(previewTarget()!) }}</p>
+            <a [href]="getMediaSrc(previewTarget()!)" download class="btn-dl">Télécharger</a>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══════ MODAL DELETE ══════ -->
+@if (deleteTarget()) {
+  <div class="modal-bg" (click)="closeDelete()">
+    <div class="modal modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-hd">
+        <h2>Supprimer le fichier</h2>
+        <button class="modal-x" (click)="closeDelete()">✕</button>
+      </div>
+      <div class="modal-body" style="text-align:center">
+        <p>Supprimer <strong>{{ fileName(deleteTarget()!) }}</strong> ?<br>
+          <small style="color:var(--text-muted)">Cette action est irréversible.</small>
+        </p>
+      </div>
+      <div class="modal-ft">
+        <button class="btn-cancel" (click)="closeDelete()">Annuler</button>
+        <button class="btn-danger" (click)="confirmDelete()" [disabled]="deleting()">
+          @if (deleting()) { <span class="spinner"></span> } @else { Supprimer }
+        </button>
+      </div>
+    </div>
+  </div>
+}

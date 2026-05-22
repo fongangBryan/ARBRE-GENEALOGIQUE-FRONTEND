@@ -5,6 +5,7 @@ import logging
 from app.core.security import get_password_hash
 from app.models.user import User, UserRole
 from app.db.session import engine, SessionLocal
+import app.db.all_models  # noqa: F401 — enregistre tous les modèles dans Base.metadata
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

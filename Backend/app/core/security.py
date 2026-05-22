@@ -41,6 +41,25 @@ def decode_token(token: str) -> Dict[str, Any]:
     except JWTError:
         raise AuthenticationException("Invalid authentication credentials")
 
+def create_email_token(user_id: str, token_type: str, expires_delta: timedelta) -> str:
+    """Crée un token JWT pour verification email ou reset password."""
+    expire = datetime.utcnow() + expires_delta
+    payload = {"sub": user_id, "type": token_type, "exp": expire}
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+def decode_email_token(token: str, expected_type: str) -> str:
+    """Décode un token JWT et retourne le user_id. Lève HTTPException si invalide."""
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    except JWTError:
+        raise HTTPException(status_code=400, detail="Token invalide ou expiré")
+    if payload.get("type") != expected_type:
+        raise HTTPException(status_code=400, detail="Type de token incorrect")
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=400, detail="Token invalide")
+    return user_id
+
 def check_rate_limit(identifier: str, max_attempts: int = 5, window_minutes: int = 15) -> bool:
     """Vérifie le rate limiting pour les tentatives de connexion"""
     from datetime import datetime

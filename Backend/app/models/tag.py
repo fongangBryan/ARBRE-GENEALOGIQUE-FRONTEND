@@ -33,8 +33,8 @@ class Tag(Base):
     created_by = Column(UUID(as_uuid=True), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     
-    # Relations
-    persons = relationship("Person", secondary=person_tag, back_populates="tags")
+    # Relations — backref crée automatiquement Person.tags sans modifier person.py
+    persons = relationship("Person", secondary=person_tag, backref="tags")
 
 
 class PersonTagHistory(Base):

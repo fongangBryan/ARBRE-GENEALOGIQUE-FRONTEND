@@ -26,10 +26,20 @@ class TwoFactorSetup(BaseModel):
     qr_code: str
 
 class TwoFactorVerify(BaseModel):
-    token: str
+    token: str = Field(..., pattern=r"^\d{6}$", description="Code TOTP à 6 chiffres")
 
 class LoginResponse(BaseModel):
     access_token: str
     refresh_token: str
     requires_2fa: bool = False
     user_id: Optional[str] = None
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str = Field(..., min_length=8)
+
+class MessageResponse(BaseModel):
+    message: str
