@@ -40,6 +40,8 @@ export class PersonsComponent implements OnInit {
     return role === 'editor' || role === 'admin';
   });
 
+  readonly isAdmin = computed(() => this.auth.currentUser()?.role === 'admin');
+
   form = this.fb.group({
     first_name:    ['', [Validators.required, Validators.minLength(1)]],
     last_name:     ['', [Validators.required, Validators.minLength(1)]],
