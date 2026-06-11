@@ -138,8 +138,10 @@ jobs:
           script: |
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
+            REPO_LOWER=$(echo "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')
+
             cat > /opt/genealogie/.env.prod << EOF
-            GITHUB_REPOSITORY=$GITHUB_REPOSITORY
+            GITHUB_REPOSITORY=$REPO_LOWER
             DB_USER=$DB_USER
             DB_PASSWORD=$DB_PASSWORD
             DB_NAME=$DB_NAME
