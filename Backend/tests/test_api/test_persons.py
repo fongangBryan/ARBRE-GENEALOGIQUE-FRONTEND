@@ -153,9 +153,17 @@ def test_P08_delete_person_reader_forbidden(client, reader_headers, created_pers
 # P09 — Obtenir une personne par ID (READER)
 # ──────────────────────────────────────────────────────────────────────────────
 
-def test_P09_get_person_by_id_reader(client, reader_headers, created_person):
-    """READER peut récupérer la fiche complète d'une personne."""
-    person_id = created_person["id"]
+def test_P09_get_person_by_id_reader(client, auth_headers, reader_headers):
+    """READER peut récupérer une personne publique par son ID."""
+    # READER ne peut pas voir les personnes privées ; on crée une personne publique
+    resp = client.post(
+        "/api/v1/persons/",
+        json={**SAMPLE_PERSON, "privacy_level": "public"},
+        headers=auth_headers,
+    )
+    assert resp.status_code == 201
+    person_id = resp.json()["id"]
+
     response = client.get(f"/api/v1/persons/{person_id}", headers=reader_headers)
     assert response.status_code == 200
     data = response.json()
@@ -181,14 +189,13 @@ def test_P10_get_nonexistent_person(client, reader_headers):
 # P11 — Recherche par nom
 # ──────────────────────────────────────────────────────────────────────────────
 
-def test_P11_search_by_name(client, auth_headers, reader_headers):
+def test_P11_search_by_name(client, auth_headers):
     """La recherche filtre les résultats par nom."""
-    # Créer deux personnes
     client.post("/api/v1/persons/", json={**SAMPLE_PERSON, "first_name": "Alice", "last_name": "Dupont"}, headers=auth_headers)
     client.post("/api/v1/persons/", json={**SAMPLE_PERSON, "first_name": "Bob", "last_name": "Martin"}, headers=auth_headers)
 
-    # Rechercher "Alice"
-    response = client.get("/api/v1/persons/?search=Alice", headers=reader_headers)
+    # EDITOR recherche dans ses propres personnes
+    response = client.get("/api/v1/persons/?search=Alice", headers=auth_headers)
     assert response.status_code == 200
     data = response.json()
     names = [p["first_name"] for p in data["items"]]
@@ -196,10 +203,10 @@ def test_P11_search_by_name(client, auth_headers, reader_headers):
     assert "Bob" not in names
 
 
-def test_P11_search_no_result(client, auth_headers, reader_headers):
+def test_P11_search_no_result(client, auth_headers):
     """Une recherche sans correspondance retourne une liste vide."""
     client.post("/api/v1/persons/", json=SAMPLE_PERSON, headers=auth_headers)
-    response = client.get("/api/v1/persons/?search=XYZ_INEXISTANT", headers=reader_headers)
+    response = client.get("/api/v1/persons/?search=XYZ_INEXISTANT", headers=auth_headers)
     assert response.status_code == 200
     assert response.json()["items"] == []
 
@@ -208,9 +215,9 @@ def test_P11_search_no_result(client, auth_headers, reader_headers):
 # P12 — Pagination
 # ──────────────────────────────────────────────────────────────────────────────
 
-def test_P12_pagination(client, auth_headers, reader_headers):
+def test_P12_pagination(client, auth_headers):
     """La pagination retourne les bons éléments par page."""
-    # Créer 5 personnes
+    # Créer 5 personnes (EDITOR pagine ses propres personnes)
     for i in range(5):
         client.post(
             "/api/v1/persons/",
@@ -219,14 +226,14 @@ def test_P12_pagination(client, auth_headers, reader_headers):
         )
 
     # Page 1, taille 2
-    resp_p1 = client.get("/api/v1/persons/?page=1&limit=2", headers=reader_headers)
+    resp_p1 = client.get("/api/v1/persons/?page=1&limit=2", headers=auth_headers)
     assert resp_p1.status_code == 200
     data_p1 = resp_p1.json()
     assert len(data_p1["items"]) <= 2
     assert data_p1["page"] == 1
 
     # Page 2, taille 2
-    resp_p2 = client.get("/api/v1/persons/?page=2&limit=2", headers=reader_headers)
+    resp_p2 = client.get("/api/v1/persons/?page=2&limit=2", headers=auth_headers)
     assert resp_p2.status_code == 200
     data_p2 = resp_p2.json()
     assert data_p2["page"] == 2

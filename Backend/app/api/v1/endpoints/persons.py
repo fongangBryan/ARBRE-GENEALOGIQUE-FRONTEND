@@ -10,7 +10,6 @@ from app.schemas.person import PersonCreate, PersonUpdate, PersonResponse, Perso
 from app.services.person_service import PersonService
 from app.services.acl_service import ACLService
 from app.api.deps import get_current_user, get_current_editor_user
-from app.api.v1.guards.acl import require_view_access, require_edit_access
 from app.core.exceptions import NotFoundException, PermissionDeniedException
 
 router = APIRouter(prefix="/persons", tags=["Persons"])
@@ -57,29 +56,36 @@ def create_person(
     return PersonService(db).create_person(person_data, current_user.id)
 
 
-@router.get(
-    "/{person_id}",
-    response_model=PersonResponse,
-    dependencies=[Depends(get_current_user), Depends(require_view_access)],
-)
-def get_person(person_id: UUID, db: Session = Depends(get_db)):
+@router.get("/{person_id}", response_model=PersonResponse)
+def get_person(
+    person_id: UUID,
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     person = PersonService(db).get_person(person_id)
     if not person:
         raise NotFoundException("Person", person_id)
+    acl_service = ACLService(db, current_user)
+    if not acl_service.can_view_person(person_id):
+        raise PermissionDeniedException("view", "person")
     return person
 
 
-@router.put(
-    "/{person_id}",
-    response_model=PersonResponse,
-    dependencies=[Depends(get_current_editor_user), Depends(require_edit_access)],
-)
+@router.put("/{person_id}", response_model=PersonResponse)
 def update_person(
     person_id: UUID,
     person_data: PersonUpdate,
+    current_user = Depends(get_current_editor_user),
     db: Session = Depends(get_db),
 ):
-    return PersonService(db).update_person(person_id, person_data)
+    person_service = PersonService(db)
+    person = person_service.get_person(person_id)
+    if not person:
+        raise NotFoundException("Person", person_id)
+    acl_service = ACLService(db, current_user)
+    if not acl_service.can_edit_person(person_id):
+        raise PermissionDeniedException("edit", "person")
+    return person_service.update_person(person_id, person_data)
 
 
 @router.delete("/{person_id}", status_code=status.HTTP_204_NO_CONTENT)

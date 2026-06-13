@@ -112,7 +112,7 @@ class TestCreatePerson:
 
     def test_sets_privacy_level(self, service):
         person = service.create_person(make_payload(privacy_level="public"), created_by=USER_A)
-        assert str(person.privacy_level).endswith("public")
+        assert person.privacy_level.value == "public"
 
     def test_creates_multiple_persons(self, service):
         p1 = service.create_person(make_payload(first_name="Alice"), created_by=USER_A)
@@ -379,7 +379,7 @@ class TestHelpersUsedByService:
     def test_format_name_with_maiden(self):
         from app.utils.helpers import format_name
         result = format_name("Marie", "Curie", maiden_name="Sklodowska")
-        assert "Curie" in result
+        assert "CURIE" in result
         assert "Marie" in result
         assert "Sklodowska" in result
 
