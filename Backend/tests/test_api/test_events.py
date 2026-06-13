@@ -114,26 +114,25 @@ class TestCreateEvent:
 
 class TestGetPersonEvents:
 
-    def test_EV04_get_person_events(self, client, auth_headers, reader_headers, created_person):
+    def test_EV04_get_person_events(self, client, auth_headers, created_person):
         """Retourne la liste des événements d'une personne."""
-        # Créer deux événements
         client.post("/api/v1/events/", json=make_event_payload(created_person["id"], event_type="birth"),  headers=auth_headers)
         client.post("/api/v1/events/", json=make_event_payload(created_person["id"], event_type="custom"), headers=auth_headers)
 
         resp = client.get(
             f"/api/v1/events/person/{created_person['id']}",
-            headers=reader_headers,
+            headers=auth_headers,
         )
         assert resp.status_code == 200
         data = resp.json()
         assert isinstance(data, list)
         assert len(data) == 2
 
-    def test_get_person_events_empty(self, client, auth_headers, reader_headers, created_person):
+    def test_get_person_events_empty(self, client, auth_headers, created_person):
         """Retourne une liste vide si la personne n'a pas d'événements."""
         resp = client.get(
             f"/api/v1/events/person/{created_person['id']}",
-            headers=reader_headers,
+            headers=auth_headers,
         )
         assert resp.status_code == 200
         assert resp.json() == []
@@ -269,7 +268,7 @@ class TestDeleteEvent:
 
 class TestFilterEventsByType:
 
-    def test_EV11_filter_by_event_type(self, client, auth_headers, reader_headers, created_person):
+    def test_EV11_filter_by_event_type(self, client, auth_headers, created_person):
         """Le filtre ?event_type= retourne uniquement les événements du type demandé."""
         pid = created_person["id"]
         client.post("/api/v1/events/", json=make_event_payload(pid, event_type="birth"),  headers=auth_headers)
@@ -278,21 +277,21 @@ class TestFilterEventsByType:
 
         resp = client.get(
             f"/api/v1/events/person/{pid}?event_type=birth",
-            headers=reader_headers,
+            headers=auth_headers,
         )
         assert resp.status_code == 200
         events = resp.json()
         assert len(events) == 1
         assert events[0]["event_type"] == "birth"
 
-    def test_filter_returns_empty_when_no_match(self, client, auth_headers, reader_headers, created_person):
+    def test_filter_returns_empty_when_no_match(self, client, auth_headers, created_person):
         """Filtre sans résultat retourne une liste vide."""
         pid = created_person["id"]
         client.post("/api/v1/events/", json=make_event_payload(pid, event_type="birth"), headers=auth_headers)
 
         resp = client.get(
             f"/api/v1/events/person/{pid}?event_type=death",
-            headers=reader_headers,
+            headers=auth_headers,
         )
         assert resp.status_code == 200
         assert resp.json() == []

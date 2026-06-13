@@ -47,11 +47,11 @@ def get_current_active_user(current_user = Depends(get_current_user)):
 def get_current_admin_user(current_user = Depends(get_current_user)):
     from app.models.user import UserRole
     if current_user.role != UserRole.ADMIN:
-        raise PermissionDeniedException(action="access admin area", resource="admin")
+        raise PermissionDeniedException(action="access", resource_type="admin area")
     return current_user
 
 def get_current_editor_user(current_user = Depends(get_current_user)):
     from app.models.user import UserRole
     if current_user.role not in [UserRole.ADMIN, UserRole.EDITOR]:
-        raise PermissionDeniedException(action="modify", resource="data")
+        raise PermissionDeniedException(action="modify", resource_type="data")
     return current_user
