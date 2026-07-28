@@ -155,6 +155,6 @@ jobs:
 
             cd /opt/genealogie
             docker compose -f docker-compose.prod.yml --env-file .env.prod pull
-            docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --remove-orphans
+            docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --remove-orphans --force-recreate
             docker image prune -f
             echo "Déploiement terminé — $(date)"
